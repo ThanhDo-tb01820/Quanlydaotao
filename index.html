@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CME Smart Tracker - Hệ thống theo dõi và cảnh báo đào tạo liên tục cho nhân viên y tế Bệnh viện Hoàn Mỹ Đồng Nai" />
+  <title>CME Smart Tracker | Bệnh viện Hoàn Mỹ Đồng Nai</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">CME Tracker</span>
+          <span class="logo-sub">Hoàn Mỹ Đồng Nai</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Ẩn/Hiện menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Tổng quan</div>
+      <a href="#" class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-alerts" onclick="showPage('alerts')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span>Cảnh báo</span>
+        <span class="nav-badge" id="alertBadge">0</span>
+      </a>
+
+      <div class="nav-section-label">Quản lý</div>
+      <a href="#" class="nav-item" id="nav-employees" onclick="showPage('employees')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Nhân viên</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-trainings" onclick="showPage('trainings')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <span>Đào tạo</span>
+      </a>
+      <a href="#" class="nav-item" id="nav-settings" onclick="showPage('settings')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Cài đặt</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info" onclick="toggleUserMenu(event)" style="cursor: pointer; position: relative;">
+        <div class="user-avatar" id="currentUserAvatar">HR</div>
+        <div class="user-details">
+          <span class="user-name" id="currentUserName">Đang tải...</span>
+          <span class="user-role" id="currentUserRole">Vai trò</span>
+        </div>
+      </div>
+      <div class="user-popup-menu" id="userPopupMenu">
+        <button onclick="openChangePasswordModal(event)">🔑 Đổi mật khẩu</button>
+        <button onclick="handleLogout(event)" class="logout-btn">🚪 Đăng xuất</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-toggle" id="mobileToggle">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div class="topbar-breadcrumb" id="breadcrumb">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-date" id="topbarDate"></div>
+        <button class="notif-btn" id="notifBtn" onclick="showPage('alerts')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notif-count" id="notifCount">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- =================== PAGE: DASHBOARD =================== -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard Tổng quan</h1>
+        <p class="page-subtitle">Theo dõi trạng thái đào tạo liên tục (CME) toàn bệnh viện</p>
+      </div>
+
+      <!-- Emergency Alert Widget -->
+      <div class="emergency-alert-widget" id="emergencyAlertWidget" style="display: none;">
+        <div class="alert-widget-icon">📢</div>
+        <div class="alert-widget-content">
+          <strong>Thông báo tổng hợp hôm nay:</strong>
+          <span id="emergencyAlertText">Đang quét hệ thống...</span>
+        </div>
+      </div>
+ 
+      <!-- Summary Cards -->
+      <div class="cards-grid" id="dashboardCards"></div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Phân bố trạng thái đào tạo</h3>
+          </div>
+          <div class="donut-wrapper">
+            <canvas id="donutChart" width="220" height="220"></canvas>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Top phòng ban cần chú ý</h3>
+          </div>
+          <div class="dept-bars" id="deptBars"></div>
+        </div>
+      </div>
+
+      <!-- Alert Preview on Dashboard -->
+      <div class="alert-panel">
+        <div class="alert-panel-header">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Cảnh báo nhanh
+          </h3>
+          <button class="btn-link" onclick="showPage('alerts')">Xem tất cả →</button>
+        </div>
+        <div class="alert-list" id="dashboardAlerts"></div>
+      </div>
+    </section>
+
+    <!-- =================== PAGE: ALERTS =================== -->
+    <section class="page" id="page-alerts">
+      <div class="page-header">
+        <h1 class="page-title">Trung tâm Cảnh báo</h1>
+        <p class="page-subtitle">Danh sách nhân viên cần xử lý khẩn</p>
+      </div>
+      <div class="filter-tabs" id="alertFilterTabs">
+        <button class="tab-btn active" data-filter="all" onclick="filterAlerts('all', this)">Tất cả</button>
+        <button class="tab-btn" data-filter="expired" onclick="filterAlerts('expired', this)">🔴 Đã hết hạn</button>
+        <button class="tab-btn" data-filter="expiring30" onclick="filterAlerts('expiring30', this)">🟠 Hết hạn trong 30 ngày</button>
+        <button class="tab-btn" data-filter="expiring60" onclick="filterAlerts('expiring60', this)">🟡 Hết hạn trong 60 ngày</button>
+        <button class="tab-btn" data-filter="missing" onclick="filterAlerts('missing', this)">⚠️ Thiếu tiết CME</button>
+      </div>
+      <div class="table-card">
+        <table class="data-table" id="alertsTable">
+          <thead>
+            <tr>
+              <th>Mã NV</th>
+              <th>Họ và Tên</th>
+              <th>Phòng Ban</th>
+              <th>Tên Khóa Học / Vấn đề</th>
+              <th>Ngày Hết Hạn</th>
+              <th>Còn lại</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody id="alertsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== PAGE: EMPLOYEES =================== -->
+    <section class="page" id="page-employees">
+      <div class="page-header">
+        <h1 class="page-title">Danh sách Nhân viên</h1>
+        <p class="page-subtitle">Quản lý hồ sơ và trạng thái đào tạo của toàn bộ nhân viên</p>
+      </div>
+      <div class="table-controls">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="empSearch" placeholder="Tìm theo tên hoặc mã NV..." oninput="debounceFilterEmployees()" />
+        </div>
+        <div class="filter-group">
+          <select id="deptFilter" onchange="filterEmployees()">
+            <option value="">Tất cả phòng ban</option>
+          </select>
+          <select id="statusFilter" onchange="filterEmployees()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="compliant">✅ Đạt yêu cầu</option>
+            <option value="non-compliant">❌ Chưa đạt</option>
+          </select>
+        </div>
+        <div class="action-buttons-group" style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="exportEmployeesExcel()" title="Xuất dữ liệu ra Excel (.xlsx)">
+            📥 Xuất Excel
+          </button>
+          <button class="btn-secondary HR-only ADMIN-only" onclick="document.getElementById('importExcelInput').click()" title="Nhập dữ liệu từ Excel (.xlsx)">
+            📤 Nhập Excel
+          </button>
+          <input type="file" id="importExcelInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importEmployeesExcel(this)" />
+          <button class="btn-primary HR-only ADMIN-only" onclick="openModal('addEmployee')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Thêm nhân viên
+          </button>
+        </div>
+      </div>
+      <div class="table-card">
+        <table class="data-table" id="employeesTable">
+          <thead>
+            <tr>
+              <th>Mã NV</th>
+              <th>Họ và Tên</th>
+              <th>Phòng Ban</th>
+              <th>Chức Danh</th>
+              <th>Tổng Tiết CME</th>
+              <th>Trạng Thái CME</th>
+              <th>Chứng Chỉ</th>
+              <th>Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="employeesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== PAGE: EMPLOYEE DETAIL =================== -->
+    <section class="page" id="page-employee-detail">
+      <div class="page-header" style="display:flex;align-items:center;gap:16px;">
+        <button class="btn-back" onclick="showPage('employees')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+          </svg>
+          Quay lại
+        </button>
+        <div>
+          <h1 class="page-title" id="detailEmpName">Chi tiết Nhân viên</h1>
+          <p class="page-subtitle" id="detailEmpDept"></p>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-profile-card" id="detailProfile"></div>
+        <div class="detail-cme-card" id="detailCME"></div>
+      </div>
+      <div class="table-card" style="margin-top:24px;">
+        <div class="table-card-header">
+          <h3>Lịch sử Khóa Đào Tạo</h3>
+          <button class="btn-primary" onclick="openModal('addTrainingForEmployee')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Thêm chứng chỉ
+          </button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tên Khóa Học</th>
+              <th>Đơn Vị Tổ Chức</th>
+              <th>Số Tiết</th>
+              <th>Ngày Cấp</th>
+              <th>Ngày Hết Hạn</th>
+              <th>Minh Chứng</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody id="detailTrainingsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== PAGE: TRAININGS =================== -->
+    <section class="page" id="page-trainings">
+      <div class="page-header">
+        <h1 class="page-title">Quản lý Đào tạo & Chứng chỉ</h1>
+        <p class="page-subtitle">Danh sách tất cả khóa đào tạo và chứng chỉ trong hệ thống</p>
+      </div>
+      <div class="table-controls">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="trainSearch" placeholder="Tìm theo tên khóa học hoặc nhân viên..." oninput="filterTrainings()" />
+        </div>
+        <div class="filter-group">
+          <select id="trainStatusFilter" onchange="filterTrainings()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="valid">🟢 Còn hiệu lực</option>
+            <option value="expiring60">🟡 Sắp hết hạn (60 ngày)</option>
+            <option value="expiring30">🟠 Khẩn cấp (30 ngày)</option>
+            <option value="expired">🔴 Đã hết hạn</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="openModal('addTraining')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Thêm chứng chỉ
+        </button>
+      </div>
+      <div class="table-card">
+        <table class="data-table" id="trainingsTable">
+          <thead>
+            <tr>
+              <th>Nhân Viên</th>
+              <th>Phòng Ban</th>
+              <th>Tên Khóa Học</th>
+              <th>Đơn Vị Tổ Chức</th>
+              <th>Số Tiết</th>
+              <th>Ngày Cấp</th>
+              <th>Ngày Hết Hạn</th>
+              <th>Minh Chứng</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody id="trainingsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== PAGE: SETTINGS =================== -->
+    <section class="page" id="page-settings">
+      <div class="page-header">
+        <h1 class="page-title">Cài đặt Hệ thống</h1>
+        <p class="page-subtitle">Cấu hình các ngưỡng cảnh báo và quy định đào tạo</p>
+      </div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3>Ngưỡng cảnh báo chứng chỉ</h3>
+          <p class="settings-desc">Hệ thống sẽ cảnh báo khi chứng chỉ còn dưới số ngày được cài đặt</p>
+          <div class="settings-field">
+            <label>🟠 Cảnh báo khẩn (màu cam) - ngày</label>
+            <div class="input-group">
+              <input type="number" id="warn30" value="30" min="1" max="365" />
+              <span>ngày</span>
+            </div>
+          </div>
+          <div class="settings-field">
+            <label>🟡 Cảnh báo sớm (màu vàng) - ngày</label>
+            <div class="input-group">
+              <input type="number" id="warn60" value="60" min="1" max="365" />
+              <span>ngày</span>
+            </div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>Quy định số tiết CME</h3>
+          <p class="settings-desc">Theo quy định của Bộ Y tế về đào tạo liên tục</p>
+          <div class="settings-field">
+            <label>📅 Yêu cầu 1 năm (tiết)</label>
+            <div class="input-group">
+              <input type="number" id="req1y" value="24" min="1" />
+              <span>tiết</span>
+            </div>
+          </div>
+          <div class="settings-field">
+            <label>📅 Yêu cầu 2 năm (tiết)</label>
+            <div class="input-group">
+              <input type="number" id="req2y" value="48" min="1" />
+              <span>tiết</span>
+            </div>
+          </div>
+          <div class="settings-field">
+            <label>📅 Yêu cầu 5 năm (tiết)</label>
+            <div class="input-group">
+              <input type="number" id="req5y" value="120" min="1" />
+              <span>tiết</span>
+            </div>
+          </div>
+        </div>
+        <div class="settings-card full-width">
+          <h3>Quản lý Phòng Ban</h3>
+          <div class="dept-list" id="deptList"></div>
+          <div class="dept-add-row">
+            <input type="text" id="newDeptInput" placeholder="Tên phòng ban mới..." />
+            <button class="btn-primary" onclick="addDepartment()">Thêm</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-actions">
+        <button class="btn-primary" onclick="saveSettings()">💾 Lưu cài đặt</button>
+        <button class="btn-secondary" onclick="resetSettings()">↺ Khôi phục mặc định</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- =================== MODALS =================== -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Modal</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div class="modal-overlay" id="changePasswordOverlay" onclick="closeChangePasswordModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">🔑 Đổi mật khẩu</h3>
+        <button class="modal-close" onclick="closeChangePasswordModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Mật khẩu cũ *</label>
+          <div style="position: relative;">
+            <input type="password" id="pwOld" placeholder="Nhập mật khẩu hiện tại..." />
+            <button class="btn-toggle-pw" onclick="togglePasswordVisibility('pwOld')">👁️</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Mật khẩu mới *</label>
+          <div style="position: relative;">
+            <input type="password" id="pwNew" placeholder="Ít nhất 8 ký tự..." />
+            <button class="btn-toggle-pw" onclick="togglePasswordVisibility('pwNew')">👁️</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Xác nhận mật khẩu mới *</label>
+          <div style="position: relative;">
+            <input type="password" id="pwConfirm" placeholder="Nhập lại mật khẩu mới..." />
+            <button class="btn-toggle-pw" onclick="togglePasswordVisibility('pwConfirm')">👁️</button>
+          </div>
+        </div>
+        <div id="changePasswordError" class="login-error-msg" style="margin-top: 0; margin-bottom: 12px; color: var(--danger); font-size: 13px; font-weight: 600;"></div>
+        <div class="form-actions" style="margin-top: 0; padding-top: 16px;">
+          <button class="btn-secondary" onclick="closeChangePasswordModal()">Hủy</button>
+          <button class="btn-primary" onclick="submitChangePassword()">💾 Lưu thay đổi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== LOGIN PAGE =================== -->
+  <div class="login-overlay" id="loginPage" style="display: none;">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-icon" style="margin: 0 auto 12px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <h2>CME Smart Tracker</h2>
+        <p>Bệnh viện Hoàn Mỹ Đồng Nai</p>
+      </div>
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập..." onkeydown="if(event.key==='Enter')handleLogin()" />
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <div style="position: relative;">
+          <input type="password" id="loginPassword" placeholder="Nhập mật khẩu..." onkeydown="if(event.key==='Enter')handleLogin()" />
+          <button class="btn-toggle-pw" onclick="togglePasswordVisibility('loginPassword')">👁️</button>
+        </div>
+      </div>
+      <div class="login-options" style="margin-bottom: 16px;">
+        <label class="remember-me" style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-secondary);">
+          <input type="checkbox" id="loginRememberMe" style="width: auto; cursor: pointer;" />
+          <span>Duy trì đăng nhập (Remember Me)</span>
+        </label>
+      </div>
+      <button class="btn-primary" onclick="handleLogin()" style="width: 100%; justify-content: center; margin-top: 8px;">🚀 Đăng nhập</button>
+      <div id="loginError" class="login-error-msg" style="color: var(--danger); font-size: 13px; font-weight: 600; text-align: center; margin-top: 12px;"></div>
+    </div>
+  </div>
+ 
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

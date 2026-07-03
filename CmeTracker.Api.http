@@ -1,0 +1,6 @@
+@CmeTracker.Api_HostAddress = http://localhost:5183
+
+GET {{CmeTracker.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
