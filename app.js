@@ -395,6 +395,10 @@ function debounceFilterEmployees() {
   }, 300);
 }
 
+let allEmployeesList = [];
+let currentEmployeesPage = 1;
+const employeesPerPage = 10;
+
 async function filterEmployees() {
   const search    = document.getElementById('empSearch')?.value || '';
   const deptId    = document.getElementById('deptFilter')?.value || '';
@@ -409,43 +413,69 @@ async function filterEmployees() {
     if (deptId)    params.set('deptId', deptId);
     if (statusVal) params.set('compliance', statusVal);
 
-    const list = await api(`/employees?${params}`);
+    allEmployeesList = await api(`/employees?${params}`);
+    currentEmployeesPage = 1;
 
-    if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><p>Không tìm thấy nhân viên phù hợp</p></td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = list.map(emp => `
-      <tr>
-        <td><code style="font-size:12px;color:var(--text-muted);">${emp.employeeCode}</code></td>
-        <td><a class="emp-link" onclick="viewEmployee(${emp.employeeId})">${emp.fullName}</a></td>
-        <td><span class="badge badge-gray">${emp.departmentName}</span></td>
-        <td>${emp.position}</td>
-        <td>
-          <strong>${emp.totalHours}</strong>
-          <span style="color:var(--text-muted);font-size:12px;"> / ${settings.requiredHours2Years} tiết</span>
-        </td>
-        <td>
-          <span class="badge ${emp.isCompliant ? 'badge-green' : 'badge-red'}">
-            ${emp.isCompliant ? '✅ Đạt' : `❌ Thiếu ${emp.missingHours} tiết`}
-          </span>
-        </td>
-        <td>
-          ${emp.certWarnings > 0
-            ? `<span class="badge badge-orange">⚠️ ${emp.certWarnings} CC cần chú ý</span>`
-            : `<span class="badge badge-green">✓ Bình thường</span>`}
-        </td>
-        <td>
-          <button class="btn-icon" onclick="viewEmployee(${emp.employeeId})" title="Xem chi tiết">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </td>
-      </tr>`).join('');
+    renderEmployeesTable();
   } catch (_) {}
 }
+
+function renderEmployeesTable() {
+  const tbody = document.getElementById('employeesTableBody');
+  
+  if (!allEmployeesList || !allEmployeesList.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><p>Không tìm thấy nhân viên phù hợp</p></td></tr>`;
+    document.getElementById('employeesPagination').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('employeesPagination').style.display = 'flex';
+
+  const totalPages = Math.ceil(allEmployeesList.length / employeesPerPage);
+  if (currentEmployeesPage < 1) currentEmployeesPage = 1;
+  if (currentEmployeesPage > totalPages) currentEmployeesPage = totalPages;
+
+  const startIndex = (currentEmployeesPage - 1) * employeesPerPage;
+  const endIndex = Math.min(startIndex + employeesPerPage, allEmployeesList.length);
+  const pageData = allEmployeesList.slice(startIndex, endIndex);
+
+  tbody.innerHTML = pageData.map(emp => `
+    <tr>
+      <td><code style="font-size:12px;color:var(--text-muted);">${emp.employeeCode}</code></td>
+      <td><a class="emp-link" onclick="viewEmployee(${emp.employeeId})">${emp.fullName}</a></td>
+      <td><span class="badge badge-gray">${emp.departmentName}</span></td>
+      <td>${emp.position}</td>
+      <td>
+        <strong>${emp.totalHours}</strong>
+        <span style="color:var(--text-muted);font-size:12px;"> / ${settings.requiredHours2Years} tiết</span>
+      </td>
+      <td>
+        <span class="badge ${emp.isCompliant ? 'badge-green' : 'badge-red'}">
+          ${emp.isCompliant ? '✅ Đạt' : `❌ Thiếu ${emp.missingHours} tiết`}
+        </span>
+      </td>
+      <td>
+        ${emp.certWarnings > 0
+          ? `<span class="badge badge-orange">⚠️ ${emp.certWarnings} CC cần chú ý</span>`
+          : `<span class="badge badge-green">✓ Bình thường</span>`}
+      </td>
+      <td>
+        <button class="btn-icon" onclick="viewEmployee(${emp.employeeId})" title="Xem chi tiết">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('employeesPageInfo').textContent = `Đang hiển thị ${startIndex + 1} - ${endIndex} / ${allEmployeesList.length} bản ghi`;
+  document.getElementById('employeesPageButtons').innerHTML = generatePaginationButtons(currentEmployeesPage, totalPages, 'goToEmployeesPage');
+}
+
+window.goToEmployeesPage = function(page) {
+  currentEmployeesPage = page;
+  renderEmployeesTable();
+};
 
 // ─────────────────────────────────────────────────────────────
 //  EMPLOYEE DETAIL
@@ -547,38 +577,99 @@ async function renderTrainings() {
   await filterTrainings();
 }
 
+let allTrainingsList = [];
+let currentTrainingsPage = 1;
+const trainingsPerPage = 10;
+
 async function filterTrainings() {
   const search    = document.getElementById('trainSearch')?.value || '';
   const statusVal = document.getElementById('trainStatusFilter')?.value || '';
 
   const tbody = document.getElementById('trainingsTableBody');
-  tbody.innerHTML = `<tr><td colspan="8"><div style="text-align:center;padding:30px;color:var(--text-muted);">Đang tải...</div></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="9"><div style="text-align:center;padding:30px;color:var(--text-muted);">Đang tải...</div></td></tr>`;
 
   try {
     const params = new URLSearchParams();
     if (search)    params.set('search', search);
     if (statusVal) params.set('status', statusVal);
 
-    const list = await api(`/trainings?${params}`);
+    allTrainingsList = await api(`/trainings?${params}`);
+    currentTrainingsPage = 1;
 
-    if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><p>Không tìm thấy kết quả phù hợp</p></td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = list.map(tr => `
-      <tr>
-        <td><a class="emp-link" onclick="viewEmployee(${tr.employeeId})">${tr.employeeName}</a></td>
-        <td><span class="badge badge-gray">${tr.departmentName}</span></td>
-        <td>${tr.courseName}</td>
-        <td>${tr.organizer}</td>
-        <td><strong>${tr.actualHours}</strong> <span style="font-size:12px;color:var(--text-muted);">/ ${tr.trainingHours}</span></td>
-        <td>${formatDate(tr.issueDate)}</td>
-        <td>${formatDate(tr.expiryDate)}</td>
-        <td>${tr.hasEvidence ? `<a href="${tr.certificateUrl}" target="_blank" class="badge badge-green" style="text-decoration:none;">📎 Xem ảnh</a>` : `<span class="badge badge-red">⚠️ Chưa có</span>`}</td>
-        <td><span class="badge ${tr.badgeClass}">${tr.statusLabel}</span></td>
-      </tr>`).join('');
+    renderTrainingsTable();
   } catch (_) {}
+}
+
+function renderTrainingsTable() {
+  const tbody = document.getElementById('trainingsTableBody');
+  
+  if (!allTrainingsList || !allTrainingsList.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><p>Không tìm thấy kết quả phù hợp</p></td></tr>`;
+    document.getElementById('trainingsPagination').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('trainingsPagination').style.display = 'flex';
+
+  const totalPages = Math.ceil(allTrainingsList.length / trainingsPerPage);
+  if (currentTrainingsPage < 1) currentTrainingsPage = 1;
+  if (currentTrainingsPage > totalPages) currentTrainingsPage = totalPages;
+
+  const startIndex = (currentTrainingsPage - 1) * trainingsPerPage;
+  const endIndex = Math.min(startIndex + trainingsPerPage, allTrainingsList.length);
+  const pageData = allTrainingsList.slice(startIndex, endIndex);
+
+  tbody.innerHTML = pageData.map(tr => `
+    <tr>
+      <td><a class="emp-link" onclick="viewEmployee(${tr.employeeId})">${tr.employeeName}</a></td>
+      <td><span class="badge badge-gray">${tr.departmentName}</span></td>
+      <td>${tr.courseName}</td>
+      <td>${tr.organizer}</td>
+      <td><strong>${tr.actualHours}</strong> <span style="font-size:12px;color:var(--text-muted);">/ ${tr.trainingHours}</span></td>
+      <td>${formatDate(tr.issueDate)}</td>
+      <td>${formatDate(tr.expiryDate)}</td>
+      <td>${tr.hasEvidence ? `<a href="${tr.certificateUrl}" target="_blank" class="badge badge-green" style="text-decoration:none;">📎 Xem ảnh</a>` : `<span class="badge badge-red">⚠️ Chưa có</span>`}</td>
+      <td><span class="badge ${tr.badgeClass}">${tr.statusLabel}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('trainingsPageInfo').textContent = `Đang hiển thị ${startIndex + 1} - ${endIndex} / ${allTrainingsList.length} bản ghi`;
+  document.getElementById('trainingsPageButtons').innerHTML = generatePaginationButtons(currentTrainingsPage, totalPages, 'goToTrainingsPage');
+}
+
+window.goToTrainingsPage = function(page) {
+  currentTrainingsPage = page;
+  renderTrainingsTable();
+};
+
+function generatePaginationButtons(currentPage, totalPages, goToPageFuncName) {
+  let html = '';
+  // Prev button
+  html += `<button class="btn-page" onclick="${goToPageFuncName}(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Trước</button>`;
+
+  // Calculate range of pages to show
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, currentPage + 2);
+
+  if (startPage > 1) {
+    html += `<button class="btn-page" onclick="${goToPageFuncName}(1)">1</button>`;
+    if (startPage > 2) html += `<span class="btn-page" style="pointer-events:none;background:transparent;border:none;">...</span>`;
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const activeClass = i === currentPage ? 'active' : '';
+    const style = i === currentPage ? 'background: var(--primary); color: white; border-color: var(--primary);' : '';
+    html += `<button class="btn-page" style="${style}" onclick="${goToPageFuncName}(${i})">${i}</button>`;
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) html += `<span class="btn-page" style="pointer-events:none;background:transparent;border:none;">...</span>`;
+    html += `<button class="btn-page" onclick="${goToPageFuncName}(${totalPages})">${totalPages}</button>`;
+  }
+
+  // Next button
+  html += `<button class="btn-page" onclick="${goToPageFuncName}(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Sau</button>`;
+  
+  return html;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1140,6 +1231,112 @@ function exportEmployeesExcel() {
   });
 }
 
+function exportAlertsExcel() {
+  api('/dashboard/alerts').then(alerts => {
+    let list = alerts || [];
+    if (currentAlertFilter === 'expired')     list = list.filter(a => a.alertType === 'red');
+    else if (currentAlertFilter === 'expiring30') list = list.filter(a => a.alertType === 'orange');
+    else if (currentAlertFilter === 'expiring60') list = list.filter(a => a.alertType === 'amber');
+    else if (currentAlertFilter === 'missing')    list = list.filter(a => a.alertKind === 'missing');
+
+    if (list.length === 0) {
+      showToast('Không có dữ liệu để xuất file!', 'warning');
+      return;
+    }
+    
+    const data = list.map(a => ({
+      'Mã Nhân Viên': a.employeeCode,
+      'Họ và Tên': a.employeeName,
+      'Phòng Ban': a.department,
+      'Khóa Học / Vấn đề': a.courseName,
+      'Ngày Hết Hạn': formatDate(a.expiryDate),
+      'Còn Lại (ngày)': a.daysLeft !== null && a.daysLeft !== undefined ? a.daysLeft : '',
+      'Trạng Thái': a.statusLabel
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wscols = [ {wch: 15}, {wch: 25}, {wch: 25}, {wch: 40}, {wch: 15}, {wch: 15}, {wch: 20} ];
+    ws['!cols'] = wscols;
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'CanhBao');
+    
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    XLSX.writeFile(wb, `Danh_Sach_Canh_Bao_CME_${dateStr}.xlsx`);
+    showToast('📥 Xuất file Excel thành công!');
+  }).catch(err => {
+    showToast('❌ Lỗi khi xuất Excel: ' + err.message, 'error');
+  });
+}
+
+async function exportTrainingsExcel() {
+  try {
+    // Tải SheetJS động nếu chưa có
+    if (typeof XLSX === 'undefined') {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    const search    = document.getElementById('trainSearch')?.value || '';
+    const statusVal = document.getElementById('trainStatusFilter')?.value || '';
+    
+    const params = new URLSearchParams();
+    if (search)    params.set('search', search);
+    if (statusVal) params.set('status', statusVal);
+
+    const list = await api(`/trainings?${params}`);
+    if (!list || list.length === 0) {
+      showToast('Không có dữ liệu để xuất file!', 'warning');
+      return;
+    }
+    
+    const data = list.map((tr, index) => ({
+      'STT': index + 1,
+      'Mã Nhân Viên': tr.employeeCode || '',
+      'Họ và Tên': tr.employeeName || '',
+      'Phòng Ban': tr.departmentName || '',
+      'Khóa Học': tr.courseName || '',
+      'Đơn Vị Tổ Chức': tr.organizer || '',
+      'Số Tiết (QĐ)': tr.trainingHours || 0,
+      'Số Tiết (TT)': tr.actualHours || 0,
+      'Ngày Cấp': tr.issueDate ? formatDate(tr.issueDate) : '',
+      'Ngày Hết Hạn': tr.expiryDate ? formatDate(tr.expiryDate) : '',
+      'Trạng Thái': tr.statusLabel || ''
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Tự động căn chỉnh độ rộng cột
+    const maxCols = Object.keys(data[0]);
+    const colWidths = maxCols.map(key => {
+      let maxLen = key.length;
+      data.forEach(row => {
+        const val = String(row[key] || '');
+        if (val.length > maxLen) maxLen = val.length;
+      });
+      return { wch: maxLen + 2 };
+    });
+    ws['!cols'] = colWidths;
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'DaoTao');
+    
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    XLSX.writeFile(wb, `Danh_Sach_Dao_Tao_CME_${dateStr}.xlsx`);
+    showToast('📥 Xuất file Excel thành công!');
+  } catch (err) {
+    console.error("Lỗi xuất Excel:", err);
+    showToast('❌ Lỗi khi xuất Excel: ' + (err.message || 'Lỗi không xác định'), 'error');
+  }
+}
+
 function importEmployeesExcel(input) {
   if (!input.files || input.files.length === 0) return;
   const file = input.files[0];
@@ -1222,13 +1419,101 @@ function importEmployeesExcel(input) {
       
       showToast(`📤 Nhập thành công ${importedCount} nhân viên! (Lỗi: ${errorCount})`, importedCount > 0 ? 'success' : 'error');
       await renderEmployees();
-      await updateAlertBadge();
-    } catch (err) {
-      showToast('❌ Lỗi khi đọc file: ' + err.message, 'error');
+      if (importedCount > 0) filterEmployees();
+    } catch (e) {
+      showToast('Lỗi khi đọc file: ' + e.message, 'error');
     }
-    input.value = '';
   };
   reader.readAsArrayBuffer(file);
+  input.value = '';
+}
+
+function importTrainingsExcel(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      if (jsonData.length === 0) {
+        showToast('File Excel trống!', 'error');
+        return;
+      }
+
+      // Pre-fetch employees to map code to id
+      const emps = await api('/employees');
+      const empMap = {};
+      emps.forEach(e => empMap[e.employeeCode.toString().toLowerCase().trim()] = e.employeeId);
+      
+      let importedCount = 0;
+      let errorCount = 0;
+      
+      for (const row of jsonData) {
+        const empCode = (row['Mã Nhân Viên'] || row['MaNV'] || row['EmployeeCode'] || row['Mã HO'] || '').toString().trim();
+        const courseName = (row['Tên Khóa Học'] || row['TenKhoaHoc'] || row['CourseName'] || row['TÊN HỘI THẢO / CHƯƠNG TRÌNH'] || row['Khóa Đào Tạo'] || '').toString().trim();
+        const organizer = (row['Đơn Vị Tổ Chức'] || row['DonViToChuc'] || row['Organizer'] || row['ĐƠN VỊ TỔ CHỨC'] || '').toString().trim();
+        
+        let issueDateStr = row['Ngày Cấp'] || row['NgayCap'] || row['IssueDate'] || row['Ngày bắt đầu đào tạo'];
+        let expiryDateStr = row['Ngày Hết Hạn'] || row['NgayHetHan'] || row['ExpiryDate'] || row['NGÀY HẾT HẠN'] || row['Ngày kết thúc đào tạo'];
+        
+        // Convert Excel serial date to string if needed
+        if (typeof issueDateStr === 'number') {
+           const d = new Date((issueDateStr - (25567 + 2)) * 86400 * 1000);
+           issueDateStr = d.toISOString().split('T')[0];
+        }
+        if (typeof expiryDateStr === 'number') {
+           const d = new Date((expiryDateStr - (25567 + 2)) * 86400 * 1000);
+           expiryDateStr = d.toISOString().split('T')[0];
+        }
+
+        const hoursStr = row['Số Tiết'] || row['SoTiet'] || row['Hours'] || row['SỐ TIẾT ĐÀO TẠO (ĐÃ QUY ĐỔI)'] || row['GIỜ TÍN CHỈ'];
+        const hours = parseInt(hoursStr) || 0;
+        
+        if (!empCode || !courseName) {
+          errorCount++;
+          continue;
+        }
+
+        const empId = empMap[empCode.toLowerCase()];
+        if (!empId) {
+           errorCount++;
+           continue; // cannot find employee
+        }
+
+        try {
+          await api('/trainings', {
+            method: 'POST',
+            body: JSON.stringify({
+              employeeId: empId,
+              courseId: 0,
+              courseName: courseName,
+              organizer: organizer || 'Không rõ',
+              issueDate: issueDateStr || new Date().toISOString().split('T')[0],
+              expiryDate: expiryDateStr || new Date().toISOString().split('T')[0],
+              trainingHours: hours,
+              certificateUrl: (row['Minh Chứng'] || row['Link'] || '').toString().trim()
+            })
+          });
+          importedCount++;
+        } catch (err) {
+          errorCount++;
+        }
+      }
+      
+      showToast(`Đã nhập ${importedCount} chứng chỉ. ${errorCount > 0 ? `Bỏ qua ${errorCount} dòng lỗi.` : ''}`, importedCount > 0 ? 'success' : 'error');
+      if (importedCount > 0) filterTrainings();
+    } catch (e) {
+      showToast('Lỗi khi đọc file: ' + e.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
 }
 
 // ─────────────────────────────────────────────────────────────

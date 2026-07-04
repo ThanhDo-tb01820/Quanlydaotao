@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=12" />
 </head>
 <body>
   <!-- Sidebar Navigation -->
@@ -16,8 +16,9 @@
     <div class="sidebar-header">
       <div class="sidebar-logo">
         <div class="logo-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 35 5 C 35 2 37 0 40 0 H 60 C 63 0 65 2 65 5 V 28 C 65 47 47 65 28 65 H 5 C 2 65 0 63 0 60 V 40 C 0 37 2 35 5 35 H 35 V 5 Z" fill="#8fd1d3"/>
+            <path d="M 72 35 H 95 C 98 35 100 37 100 40 V 60 C 100 63 98 65 95 65 H 65 V 95 C 65 98 63 100 60 100 H 40 C 37 100 35 98 35 95 V 72 C 35 53 53 35 72 35 Z" fill="#008b98"/>
           </svg>
         </div>
         <div class="logo-text">
@@ -163,9 +164,14 @@
 
     <!-- =================== PAGE: ALERTS =================== -->
     <section class="page" id="page-alerts">
-      <div class="page-header">
-        <h1 class="page-title">Trung tâm Cảnh báo</h1>
-        <p class="page-subtitle">Danh sách nhân viên cần xử lý khẩn</p>
+      <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h1 class="page-title">Trung tâm Cảnh báo</h1>
+          <p class="page-subtitle">Danh sách nhân viên cần xử lý khẩn</p>
+        </div>
+        <button class="btn-secondary" onclick="exportAlertsExcel()" title="Xuất dữ liệu ra Excel (.xlsx)">
+          📥 Xuất Excel
+        </button>
       </div>
       <div class="filter-tabs" id="alertFilterTabs">
         <button class="tab-btn active" data-filter="all" onclick="filterAlerts('all', this)">Tất cả</button>
@@ -236,17 +242,22 @@
           <thead>
             <tr>
               <th>Mã NV</th>
-              <th>Họ và Tên</th>
+              <th>Họ Và Tên</th>
               <th>Phòng Ban</th>
               <th>Chức Danh</th>
-              <th>Tổng Tiết CME</th>
-              <th>Trạng Thái CME</th>
-              <th>Chứng Chỉ</th>
+              <th>Tổng Tiết (2 năm)</th>
+              <th>Đạt Yêu Cầu</th>
+              <th>Cảnh Báo CC</th>
               <th>Thao Tác</th>
             </tr>
           </thead>
           <tbody id="employeesTableBody"></tbody>
         </table>
+      </div>
+      <!-- Pagination for Employees -->
+      <div class="pagination-controls" id="employeesPagination">
+        <span class="page-info" id="employeesPageInfo">Đang hiển thị 0 bản ghi</span>
+        <div class="page-buttons" id="employeesPageButtons"></div>
       </div>
     </section>
 
@@ -317,12 +328,21 @@
             <option value="expired">🔴 Đã hết hạn</option>
           </select>
         </div>
-        <button class="btn-primary" onclick="openModal('addTraining')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Thêm chứng chỉ
-        </button>
+        <div class="action-buttons-group" style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="exportTrainingsExcel()" title="Xuất dữ liệu ra Excel (.xlsx)">
+            📥 Xuất Excel
+          </button>
+          <button class="btn-secondary HR-only ADMIN-only" onclick="document.getElementById('importTrainingsExcelInput').click()" title="Nhập dữ liệu từ Excel (.xlsx)">
+            📤 Nhập Excel
+          </button>
+          <input type="file" id="importTrainingsExcelInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importTrainingsExcel(this)" />
+          <button class="btn-primary HR-only ADMIN-only" onclick="openModal('addTraining')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Thêm chứng chỉ
+          </button>
+        </div>
       </div>
       <div class="table-card">
         <table class="data-table" id="trainingsTable">
@@ -341,6 +361,11 @@
           </thead>
           <tbody id="trainingsTableBody"></tbody>
         </table>
+      </div>
+      <!-- Pagination for Trainings -->
+      <div class="pagination-controls" id="trainingsPagination">
+        <span class="page-info" id="trainingsPageInfo">Đang hiển thị 0 bản ghi</span>
+        <div class="page-buttons" id="trainingsPageButtons"></div>
       </div>
     </section>
 
@@ -497,7 +522,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="data.js?v=2"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
