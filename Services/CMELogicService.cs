@@ -65,7 +65,12 @@ public class CMELogicService
     /// Nếu ActualHours = 0 (chưa nhập), fallback về TrainingHours.
     /// </summary>
     public int GetTotalActualHours(IEnumerable<EmployeeTraining> trainings)
-        => trainings.Sum(t => t.ActualHours > 0 ? t.ActualHours : t.TrainingHours);
+    {
+        var twoYearsAgo = DateOnly.FromDateTime(DateTime.Today.AddYears(-2));
+        return trainings
+            .Where(t => t.IssueDate >= twoYearsAgo)
+            .Sum(t => t.ActualHours > 0 ? t.ActualHours : t.TrainingHours);
+    }
 
     // ─── Trạng thái tuân thủ CME ─────────────────────────────
     public (bool Compliant, int TotalHours, int MissingHours) GetCompliance(

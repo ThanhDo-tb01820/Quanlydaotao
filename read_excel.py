@@ -139,10 +139,11 @@ for _, row in df.iterrows():
     if not ma_ho or not course_name:
         continue
 
-    issue_date = safe_date(row.get('Ngày bắt đầu đào tạo'))
+    issue_date = safe_date(row.get('Ngày cấp'))
+    if issue_date == 'NULL':
+        issue_date = safe_date(row.get('Ngày bắt đầu đào tạo'))
+        
     expiry_date = safe_date(row.get('NGÀY HẾT HẠN'))
-    if expiry_date == 'NULL':
-        expiry_date = safe_date(row.get('Ngày kết thúc đào tạo'))
     hours = safe_int(row.get('SỐ TIẾT ĐÀO TẠO\n(ĐÃ QUY ĐỔI)'))
     if hours == 0:
         hours = safe_int(row.get('GIỜ TÍN CHỈ\n'))

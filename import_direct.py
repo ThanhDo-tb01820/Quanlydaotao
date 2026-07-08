@@ -88,7 +88,7 @@ for _, row in emp_df.iterrows():
         continue
     full_name = v(row.get('HỌ VÀ TÊN')) or 'Không rõ'
     phong_ban = v(row.get('PHÒNG BAN'))
-    chuc_danh = v(row.get('CHỨC DANH'))
+    chuc_danh = v(row.get('CHỨC DANH')) or 'Chưa cập nhật'
     join_date = vdate(row.get('NGÀY VÀO CÔNG TY'))
     dob = vdate(row.get('NGÀY SINH'))
     nghi_viec = v(row.get('Chech nghỉ việc'))
@@ -118,10 +118,10 @@ for _, row in courses_df.iterrows():
     if not course_name:
         continue
     course_name = course_name[:254]  # gioi han 255 ky tu
-    organizer = v(row.get('ĐƠN VỊ\nTỔ CHỨC'))
+    organizer = v(row.get('ĐƠN VỊ\nTỔ CHỨC')) or 'Không rõ'
     if organizer:
         organizer = organizer[:254]
-    course_code = v(row.get('Mã đào tạo'))
+    course_code = v(row.get('Mã đào tạo')) or 'N/A'
     if course_code:
         course_code = course_code[:49]  # gioi han 50 ky tu
     hours = vint(row.get('SỐ TIẾT ĐÀO TẠO\n(ĐÃ QUY ĐỔI)'))
@@ -159,14 +159,15 @@ for _, row in df.iterrows():
         training_errors += 1
         continue
 
-    issue_date = vdate(row.get('Ngày bắt đầu đào tạo'))
+    issue_date = vdate(row.get('Ngày cấp'))
+    if not issue_date:
+        issue_date = vdate(row.get('Ngày bắt đầu đào tạo'))
+        
     expiry_date = vdate(row.get('NGÀY HẾT HẠN'))
-    if not expiry_date:
-        expiry_date = vdate(row.get('Ngày kết thúc đào tạo'))
     hours = vint(row.get('SỐ TIẾT ĐÀO TẠO\n(ĐÃ QUY ĐỔI)'))
     if hours == 0:
         hours = vint(row.get('GIỜ TÍN CHỈ\n'))
-    bang_cap = v(row.get('Bằng cấp'))
+    bang_cap = v(row.get('Bằng cấp')) or ''
 
     cursor.execute(
         "INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) "
