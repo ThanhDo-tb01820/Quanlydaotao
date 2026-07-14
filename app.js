@@ -113,6 +113,21 @@ const pageConfigs = {
   settings:           { breadcrumb: 'Cài đặt' },
 };
 
+// ─────────────────────────────────────────────────────────────
+//  MOBILE TABLE HELPER: gán data-label vào mỗi <td>
+//  để CSS card layout có thể hiển thị tên cột trên mobile
+// ─────────────────────────────────────────────────────────────
+function applyMobileDataLabels(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    [...tr.querySelectorAll('td')].forEach((td, i) => {
+      td.setAttribute('data-label', headers[i] || '');
+    });
+  });
+}
+
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById(`page-${pageId}`);
@@ -122,6 +137,12 @@ function showPage(pageId) {
   const navEl = document.getElementById(`nav-${pageId}`) ||
                 document.getElementById('nav-employees');
   if (navEl) navEl.classList.add('active');
+
+  // Sync mobile bottom nav
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  const mnavEl = document.getElementById(`mnav-${pageId}`) ||
+                 document.getElementById('mnav-employees');
+  if (mnavEl) mnavEl.classList.add('active');
 
   document.getElementById('breadcrumb').textContent =
     pageConfigs[pageId]?.breadcrumb || pageId;
@@ -134,9 +155,10 @@ function showPage(pageId) {
     case 'settings':        renderSettings();   break;
   }
 
-  document.getElementById('sidebar').classList.remove('mobile-open');
+  closeMobileSidebar();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 // ─────────────────────────────────────────────────────────────
 //  RENDER: DASHBOARD
@@ -367,6 +389,7 @@ async function filterAlerts(filter, btnEl) {
         <td><span class="badge ${a.badgeClass}">${a.statusLabel}</span></td>
       </tr>`;
     }).join('');
+    applyMobileDataLabels('alertsTable');
   } catch (_) {}
 }
 
@@ -467,6 +490,8 @@ function renderEmployeesTable() {
         </button>
       </td>
     </tr>`).join('');
+  applyMobileDataLabels('employeesTable');
+
 
   document.getElementById('employeesPageInfo').textContent = `Đang hiển thị ${startIndex + 1} - ${endIndex} / ${allEmployeesList.length} bản ghi`;
   document.getElementById('employeesPageButtons').innerHTML = generatePaginationButtons(currentEmployeesPage, totalPages, 'goToEmployeesPage');
@@ -631,6 +656,8 @@ function renderTrainingsTable() {
       <td>${tr.hasEvidence ? `<a href="${tr.certificateUrl}" target="_blank" class="badge badge-green" style="text-decoration:none;">📎 Xem ảnh</a>` : `<span class="badge badge-red">⚠️ Chưa có</span>`}</td>
       <td><span class="badge ${tr.badgeClass}">${tr.statusLabel}</span></td>
     </tr>`).join('');
+  applyMobileDataLabels('trainingsTable');
+
 
   document.getElementById('trainingsPageInfo').textContent = `Đang hiển thị ${startIndex + 1} - ${endIndex} / ${allTrainingsList.length} bản ghi`;
   document.getElementById('trainingsPageButtons').innerHTML = generatePaginationButtons(currentTrainingsPage, totalPages, 'goToTrainingsPage');
@@ -995,7 +1022,16 @@ document.getElementById('sidebarToggle').addEventListener('click', () => {
 
 document.getElementById('mobileToggle').addEventListener('click', () => {
   document.getElementById('sidebar').classList.toggle('mobile-open');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (overlay) overlay.classList.toggle('show');
 });
+
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
 
 // ─────────────────────────────────────────────────────────────
 //  XÁC THỰC & TÀI KHOẢN (AUTHENTICATION & AUTHORIZATION)

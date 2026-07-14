@@ -42,8 +42,11 @@ public class CMELogicService
 
     // ─── Trạng thái chứng chỉ ────────────────────────────────
     public (string Label, string CssClass, string BadgeClass, int DaysLeft) GetCertStatus(
-        DateOnly? expiryDate, int warn30, int warn60)
+        DateOnly? expiryDate, int warn30, int warn60, bool isCompleted = false)
     {
+        if (isCompleted)
+            return ("✅ Hoàn thành", "green", "badge-green", 9999);
+
         if (expiryDate == null)
             return ("⚪ Chưa có hạn", "gray", "badge-gray", 9999);
         var today    = DateOnly.FromDateTime(DateTime.Today);
@@ -93,8 +96,10 @@ public class CMELogicService
     // ─── Map Training → DTO ──────────────────────────────────
     public TrainingRecordDto MapTraining(EmployeeTraining t, int warn30, int warn60)
     {
-        var (label, _, badge, days) = GetCertStatus(t.ExpiryDate, warn30, warn60);
         var actualH = t.ActualHours > 0 ? t.ActualHours : t.TrainingHours;
+        bool isCompleted = actualH >= t.TrainingHours && t.TrainingHours > 0;
+        var (label, _, badge, days) = GetCertStatus(t.ExpiryDate, warn30, warn60, isCompleted);
+        
         return new TrainingRecordDto
         {
             TrainingId      = t.TrainingId,
@@ -125,7 +130,9 @@ public class CMELogicService
         var (compliant, total, missing) = GetCompliance(emp.Trainings, required);
         var certWarnings = emp.Trainings.Count(t =>
         {
-            var (_, css, _, _) = GetCertStatus(t.ExpiryDate, warn30, warn60);
+            var actualH = t.ActualHours > 0 ? t.ActualHours : t.TrainingHours;
+            bool isCompleted = actualH >= t.TrainingHours && t.TrainingHours > 0;
+            var (_, css, _, _) = GetCertStatus(t.ExpiryDate, warn30, warn60, isCompleted);
             return css != "green";
         });
         // Số hồ sơ chưa có minh chứng
@@ -168,8 +175,10 @@ public class CMELogicService
             // 1. Cảnh báo chứng chỉ hết hạn / sắp hết hạn
             foreach (var tr in emp.Trainings)
             {
+                var actualH = tr.ActualHours > 0 ? tr.ActualHours : tr.TrainingHours;
+                bool isCompleted = actualH >= tr.TrainingHours && tr.TrainingHours > 0;
                 var (label, cssClass, badge, daysLeft) = GetCertStatus(
-                    tr.ExpiryDate, cfg.UrgentWarningDays, cfg.ExpiryWarningDays);
+                    tr.ExpiryDate, cfg.UrgentWarningDays, cfg.ExpiryWarningDays, isCompleted);
 
                 if (cssClass != "green")
                 {

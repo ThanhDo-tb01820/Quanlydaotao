@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=12" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 <body>
   <!-- Sidebar Navigation -->
@@ -84,6 +84,9 @@
       </div>
     </div>
   </aside>
+
+  <!-- Sidebar overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
   <!-- Main Content -->
   <main class="main-content" id="mainContent">
@@ -193,7 +196,7 @@
               <th>Trạng Thái</th>
             </tr>
           </thead>
-          <tbody id="alertsTableBody"></tbody>
+          <tbody id="alertsTableBody" data-labels="Mã NV,Họ và Tên,Phòng Ban,Tên Khóa Học,Ngày Hết Hạn,Còn lại,Trạng Thái"></tbody>
         </table>
       </div>
     </section>
@@ -251,7 +254,7 @@
               <th>Thao Tác</th>
             </tr>
           </thead>
-          <tbody id="employeesTableBody"></tbody>
+          <tbody id="employeesTableBody" data-labels="Mã NV,Họ Và Tên,Phòng Ban,Chức Danh,Tổng Tiết,Đạt YC,Cảnh Báo CC,"></tbody>
         </table>
       </div>
       <!-- Pagination for Employees -->
@@ -520,6 +523,43 @@
  
   <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <div class="mobile-bottom-nav-inner">
+      <button class="mobile-nav-btn active" id="mnav-dashboard" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="mobile-nav-btn" id="mnav-alerts" onclick="showPage('alerts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="mobile-nav-badge" id="mnavAlertBadge" style="display:none"></span>
+        <span>Cảnh báo</span>
+      </button>
+      <button class="mobile-nav-btn" id="mnav-employees" onclick="showPage('employees')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Nhân viên</span>
+      </button>
+      <button class="mobile-nav-btn" id="mnav-trainings" onclick="showPage('trainings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <span>Đào tạo</span>
+      </button>
+      <button class="mobile-nav-btn" id="mnav-settings" onclick="showPage('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Cài đặt</span>
+      </button>
+    </div>
+  </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="data.js?v=2"></script>
