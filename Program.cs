@@ -96,6 +96,24 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var db = context.HttpContext.RequestServices.GetRequiredService<CmeTrackerDbContext>();
+            var username = context.Principal?.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+            {
+                context.Fail("Unauthorized");
+                return;
+            }
+            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null || !user.IsActive)
+            {
+                context.Fail("Tài khoản đã bị khóa hoặc không tồn tại.");
+            }
+        }
+    };
 });
 
 var app = builder.Build();

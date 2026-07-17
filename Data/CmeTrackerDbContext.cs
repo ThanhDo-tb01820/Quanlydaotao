@@ -26,6 +26,9 @@ public class CmeTrackerDbContext : DbContext
         // Explicit primary keys for all entities
         modelBuilder.Entity<CMERequirement>().HasKey(r => r.RequirementId);
         modelBuilder.Entity<User>().HasKey(u => u.UserId);
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
         modelBuilder.Entity<AuditLog>().HasKey(a => a.AuditLogId);
 
         // Global Query Filter for Soft Delete

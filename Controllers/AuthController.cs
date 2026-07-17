@@ -77,7 +77,8 @@ public class AuthController : ControllerBase
             UserId = user.UserId,
             Username = user.Username,
             FullName = user.FullName,
-            Role = user.Role
+            Role = user.Role,
+            EmployeeId = user.EmployeeId
         });
     }
 
@@ -139,7 +140,8 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Role, user.Role),
-            new Claim("FullName", user.FullName)
+            new Claim("FullName", user.FullName),
+            new Claim("EmployeeId", user.EmployeeId?.ToString() ?? "")
         };
 
         var tokenDescriptor = new SecurityTokenDescriptor

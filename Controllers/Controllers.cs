@@ -29,6 +29,7 @@ public class DashboardController : ControllerBase
     [HttpGet("summary")]
     public async Task<ActionResult<DashboardSummaryDto>> GetSummary()
     {
+        if (User.IsInRole("User")) return Forbid();
         var cfg = await _cme.GetSettingsAsync();
         var employees = await _db.Employees
             .Where(e => e.IsActive)
@@ -61,6 +62,7 @@ public class DashboardController : ControllerBase
     [HttpGet("alerts")]
     public async Task<ActionResult<List<AlertDto>>> GetAlerts([FromQuery] string? type = null)
     {
+        if (User.IsInRole("User")) return Forbid();
         var alerts = await _cme.BuildAlertsAsync();
         if (!string.IsNullOrEmpty(type))
             alerts = alerts.Where(a => a.AlertType == type || a.AlertKind == type).ToList();
@@ -109,6 +111,7 @@ public class EmployeesController : ControllerBase
         [FromQuery] int?    deptId     = null,
         [FromQuery] string? compliance = null)
     {
+        if (User.IsInRole("User")) return Forbid();
         var cfg = await _cme.GetSettingsAsync();
 
         var query = _db.Employees
@@ -141,6 +144,14 @@ public class EmployeesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<EmployeeDetailDto>> GetById(int id)
     {
+        if (User.IsInRole("User"))
+        {
+            var empIdClaim = User.FindFirst("EmployeeId")?.Value;
+            if (string.IsNullOrEmpty(empIdClaim) || !int.TryParse(empIdClaim, out var linkedId) || linkedId != id)
+            {
+                return Forbid();
+            }
+        }
         var cfg = await _cme.GetSettingsAsync();
         var emp = await _db.Employees
             .Include(e => e.Department)
@@ -242,6 +253,14 @@ public class EmployeesController : ControllerBase
         var emp = await _db.Employees.FindAsync(id);
         if (emp == null) return NotFound();
         
+        // Ngắt liên kết và khóa tài khoản người dùng tương ứng khi xóa nhân viên
+        var linkedUsers = await _db.Users.Where(u => u.EmployeeId == id).ToListAsync();
+        foreach (var u in linkedUsers)
+        {
+            u.EmployeeId = null;
+            u.IsActive = false;
+        }
+        
         emp.IsDeleted = true;
         emp.DeletedAt = DateTime.Now;
         
@@ -298,6 +317,19 @@ public class TrainingsController : ControllerBase
             .Include(t => t.Employee).ThenInclude(e => e.Department)
             .Include(t => t.Course)
             .ToListAsync();
+
+        if (User.IsInRole("User"))
+        {
+            var empIdClaim = User.FindFirst("EmployeeId")?.Value;
+            if (!string.IsNullOrEmpty(empIdClaim) && int.TryParse(empIdClaim, out var linkedId))
+            {
+                list = list.Where(t => t.EmployeeId == linkedId).ToList();
+            }
+            else
+            {
+                list = new List<EmployeeTraining>();
+            }
+        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -422,6 +454,7 @@ public class SettingsController : ControllerBase
 
     /// <summary>GET /api/v1/settings — Lấy toàn bộ cài đặt</summary>
     [HttpGet]
+    [Authorize(Roles = "Admin,HR,Manager")]
     public async Task<ActionResult<SystemSettingsDto>> Get()
         => Ok(await _cme.GetSettingsAsync());
 

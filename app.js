@@ -20,6 +20,7 @@ let currentDetailEmpId = null;
 let currentAlertFilter = 'all';
 let departments        = [];
 let courses            = [];
+let allUsersList       = [];
 let settings           = { expiryWarningDays: 60, urgentWarningDays: 30, requiredHours2Years: 48 };
 
 // ─────────────────────────────────────────────────────────────
@@ -111,6 +112,7 @@ const pageConfigs = {
   'employee-detail':  { breadcrumb: 'Nhân viên → Chi tiết' },
   trainings:          { breadcrumb: 'Đào tạo' },
   settings:           { breadcrumb: 'Cài đặt' },
+  users:              { breadcrumb: 'Phân quyền & Tài khoản' },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -153,6 +155,7 @@ function showPage(pageId) {
     case 'employees':       renderEmployees();  break;
     case 'trainings':       renderTrainings();  break;
     case 'settings':        renderSettings();   break;
+    case 'users':           renderUsers();      break;
   }
 
   closeMobileSidebar();
@@ -1065,11 +1068,15 @@ function initAuth() {
     document.getElementById('loginPage').style.display = 'none';
     
     document.getElementById('currentUserName').textContent = currentUser.fullName;
-    document.getElementById('currentUserRole').textContent = `Vai trò: ${currentUser.role}`;
+    document.getElementById('currentUserRole').textContent = `Vai trò: ${currentUser.role === 'User' ? 'Nhân viên' : currentUser.role}`;
     document.getElementById('currentUserAvatar').textContent = currentUser.fullName.split(' ').pop().slice(0, 2).toUpperCase();
     
     applyRolePermissions(currentUser.role);
-    runInitApis();
+    if (currentUser.role === 'User') {
+      viewMyProfile();
+    } else {
+      runInitApis();
+    }
   } else {
     document.getElementById('loginPage').style.display = 'flex';
   }
@@ -1077,22 +1084,48 @@ function initAuth() {
 
 function applyRolePermissions(role) {
   // Reset các class ẩn trước
-  document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only').forEach(el => el.classList.remove('role-hidden'));
+  document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only, .USER-only').forEach(el => el.classList.remove('role-hidden'));
   
-  if (role === 'Viewer') {
+  if (role === 'User') {
+    // Nhân viên chỉ được xem hồ sơ của mình
+    document.getElementById('nav-dashboard')?.classList.add('role-hidden');
+    document.getElementById('nav-alerts')?.classList.add('role-hidden');
     document.getElementById('nav-employees')?.classList.add('role-hidden');
     document.getElementById('nav-trainings')?.classList.add('role-hidden');
     document.getElementById('nav-settings')?.classList.add('role-hidden');
-    document.getElementById('nav-alerts')?.classList.add('role-hidden');
+    document.getElementById('nav-users')?.classList.add('role-hidden');
     document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only').forEach(el => el.classList.add('role-hidden'));
+    
+    // Hide mobile buttons
+    document.getElementById('mnav-dashboard')?.classList.add('role-hidden');
+    document.getElementById('mnav-alerts')?.classList.add('role-hidden');
+    document.getElementById('mnav-employees')?.classList.add('role-hidden');
+    document.getElementById('mnav-trainings')?.classList.add('role-hidden');
+    document.getElementById('mnav-settings')?.classList.add('role-hidden');
   }
-  else if (role === 'Manager') {
-    document.getElementById('nav-settings')?.classList.add('role-hidden');
-    document.querySelectorAll('.HR-only, .ADMIN-only').forEach(el => el.classList.add('role-hidden'));
-  }
-  else if (role === 'HR') {
-    document.getElementById('nav-settings')?.classList.add('role-hidden');
-    document.querySelectorAll('.ADMIN-only').forEach(el => el.classList.add('role-hidden'));
+  else {
+    // Các vai trò quản trị ẩn menu Hồ sơ cá nhân
+    document.getElementById('nav-my-profile')?.classList.add('role-hidden');
+    document.getElementById('mnav-my-profile')?.classList.add('role-hidden');
+    
+    if (role === 'Viewer') {
+      document.getElementById('nav-employees')?.classList.add('role-hidden');
+      document.getElementById('nav-trainings')?.classList.add('role-hidden');
+      document.getElementById('nav-settings')?.classList.add('role-hidden');
+      document.getElementById('nav-users')?.classList.add('role-hidden');
+      document.getElementById('nav-alerts')?.classList.add('role-hidden');
+      document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only').forEach(el => el.classList.add('role-hidden'));
+    }
+    else if (role === 'Manager') {
+      document.getElementById('nav-settings')?.classList.add('role-hidden');
+      document.getElementById('nav-users')?.classList.add('role-hidden');
+      document.querySelectorAll('.HR-only, .ADMIN-only').forEach(el => el.classList.add('role-hidden'));
+    }
+    else if (role === 'HR') {
+      document.getElementById('nav-settings')?.classList.add('role-hidden');
+      document.getElementById('nav-users')?.classList.add('role-hidden');
+      document.querySelectorAll('.ADMIN-only').forEach(el => el.classList.add('role-hidden'));
+    }
   }
 }
 
@@ -1126,7 +1159,7 @@ async function handleLogin() {
     }
     
     const data = await res.json();
-    currentUser = { userId: data.userId, username: data.username, fullName: data.fullName, role: data.role };
+    currentUser = { userId: data.userId, username: data.username, fullName: data.fullName, role: data.role, employeeId: data.employeeId };
     currentToken = data.token;
     
     const storage = rememberMe ? localStorage : sessionStorage;
@@ -1136,7 +1169,7 @@ async function handleLogin() {
     document.getElementById('loginPage').style.display = 'none';
     
     document.getElementById('currentUserName').textContent = currentUser.fullName;
-    document.getElementById('currentUserRole').textContent = `Vai trò: ${currentUser.role}`;
+    document.getElementById('currentUserRole').textContent = `Vai trò: ${currentUser.role === 'User' ? 'Nhân viên' : currentUser.role}`;
     document.getElementById('currentUserAvatar').textContent = currentUser.fullName.split(' ').pop().slice(0, 2).toUpperCase();
     
     applyRolePermissions(currentUser.role);
@@ -1144,7 +1177,11 @@ async function handleLogin() {
     usernameInput.value = '';
     passwordInput.value = '';
     
-    runInitApis();
+    if (currentUser.role === 'User') {
+      viewMyProfile();
+    } else {
+      runInitApis();
+    }
     showToast('👋 Đăng nhập thành công!');
   } catch (err) {
     errorDiv.textContent = err.message;
@@ -1550,6 +1587,354 @@ function importTrainingsExcel(input) {
   };
   reader.readAsArrayBuffer(file);
   input.value = '';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  QUẢN LÝ TÀI KHOẢN & PHÂN QUYỀN (USER MANAGEMENT)
+// ─────────────────────────────────────────────────────────────
+function viewMyProfile() {
+  if (currentUser && currentUser.employeeId) {
+    viewEmployee(currentUser.employeeId);
+  } else {
+    showPage('employee-detail');
+    document.getElementById('detailEmpName').textContent = 'Tài khoản chưa liên kết';
+    document.getElementById('detailEmpDept').textContent = 'Vui lòng liên hệ Admin để liên kết với nhân viên!';
+    document.getElementById('detailProfile').innerHTML = '<div class="empty-state"><p>Chưa liên kết với nhân viên nào.</p></div>';
+    document.getElementById('detailCME').innerHTML = '';
+    document.getElementById('detailTrainingsBody').innerHTML = '';
+  }
+  closeMobileSidebar();
+}
+
+async function renderUsers() {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="7"><div style="text-align:center;padding:30px;color:var(--text-muted);">Đang tải...</div></td></tr>`;
+  
+  try {
+    allUsersList = await api('/users');
+    displayUsersTable(allUsersList);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><p>Không thể tải danh sách tài khoản.</p></td></tr>`;
+  }
+}
+
+function filterUsers() {
+  const search = document.getElementById('userSearch')?.value.toLowerCase() || '';
+  const role = document.getElementById('userRoleFilter')?.value || '';
+  
+  let list = allUsersList;
+  if (search) {
+    list = list.filter(u => u.username.toLowerCase().includes(search) || u.fullName.toLowerCase().includes(search));
+  }
+  if (role) {
+    list = list.filter(u => u.role === role);
+  }
+  
+  displayUsersTable(list);
+}
+
+function displayUsersTable(list) {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+  
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><p>Không tìm thấy tài khoản phù hợp</p></td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = list.map(u => `
+    <tr>
+      <td><strong style="color:var(--brand);">${u.username}</strong></td>
+      <td>${u.fullName}</td>
+      <td><span class="badge ${u.role === 'Admin' ? 'badge-red' : u.role === 'HR' ? 'badge-green' : u.role === 'Manager' ? 'badge-blue' : u.role === 'User' ? 'badge-gray-red' : 'badge-gray'}">${u.role === 'User' ? 'Nhân viên' : u.role}</span></td>
+      <td>${u.employeeName ? `<code>${u.employeeCode}</code> - ${u.employeeName}` : '<em style="color:var(--text-muted);">Không có</em>'}</td>
+      <td>${u.departmentName ? `<span class="badge badge-gray">${u.departmentName}</span>` : '—'}</td>
+      <td><span class="badge ${u.isActive ? 'badge-green' : 'badge-gray'}">${u.isActive ? '✓ Hoạt động' : '✗ Khóa'}</span></td>
+      <td>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-icon" onclick="openEditUserModal(${u.userId})" title="Chỉnh sửa tài khoản">
+            🔧
+          </button>
+          <button class="btn-icon" onclick="openResetUserPasswordModal(${u.userId})" title="Đặt lại mật khẩu">
+            🔑
+          </button>
+          <button class="btn-icon" onclick="deleteUser(${u.userId})" title="Xóa tài khoản" style="color:var(--danger);" ${u.username === (currentUser ? currentUser.username : '') ? 'disabled' : ''}>
+            🗑️
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  applyMobileDataLabels('usersTable');
+}
+
+async function openCreateUserModal() {
+  const overlay = document.getElementById('modalOverlay');
+  const title   = document.getElementById('modalTitle');
+  const body    = document.getElementById('modalBody');
+  overlay.classList.add('open');
+  
+  title.textContent = 'Thêm Tài khoản Mới';
+  
+  let empOptions = '<option value="">— Không liên kết —</option>';
+  try {
+    const emps = await api('/employees');
+    empOptions += emps.map(e => `<option value="${e.employeeId}">${e.fullName} (${e.employeeCode})</option>`).join('');
+  } catch(_) {}
+  
+  body.innerHTML = `
+    <div class="form-group">
+      <label>Tên đăng nhập *</label>
+      <input type="text" id="fUsername" placeholder="Nhập tên đăng nhập..." />
+    </div>
+    <div class="form-group">
+      <label>Họ và Tên *</label>
+      <input type="text" id="fFullName" placeholder="Nhập họ và tên..." />
+    </div>
+    <div class="form-group">
+      <label>Mật khẩu *</label>
+      <input type="password" id="fPassword" placeholder="Tối thiểu 8 ký tự..." />
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Vai trò *</label>
+        <select id="fRole">
+          <option value="Viewer">Viewer</option>
+          <option value="Manager">Manager</option>
+          <option value="HR">HR</option>
+          <option value="Admin">Admin</option>
+          <option value="User">Nhân viên (User)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nhân viên liên kết</label>
+        <select id="fUserEmp">${empOptions}</select>
+      </div>
+    </div>
+    <div id="userModalError" style="color:var(--danger);font-size:13px;font-weight:600;margin-bottom:12px;margin-top:8px;"></div>
+    <div class="form-actions" style="margin-top: 24px;">
+      <button class="btn-secondary" onclick="closeModal()">Hủy</button>
+      <button class="btn-primary" onclick="saveUser()">💾 Lưu tài khoản</button>
+    </div>
+  `;
+  
+  setTimeout(() => {
+    if (document.getElementById('fUserEmp')) {
+      new TomSelect('#fUserEmp', {
+        create: false,
+        sortField: { field: "text", direction: "asc" }
+      });
+    }
+  }, 10);
+}
+
+async function openEditUserModal(userId) {
+  const user = allUsersList.find(u => u.userId === userId);
+  if (!user) return;
+
+  const overlay = document.getElementById('modalOverlay');
+  const title   = document.getElementById('modalTitle');
+  const body    = document.getElementById('modalBody');
+  overlay.classList.add('open');
+  
+  title.textContent = 'Chỉnh sửa Tài khoản';
+  
+  let empOptions = '<option value="">— Không liên kết —</option>';
+  try {
+    const emps = await api('/employees');
+    empOptions += emps.map(e => `<option value="${e.employeeId}" ${e.employeeId === user.employeeId ? 'selected' : ''}>${e.fullName} (${e.employeeCode})</option>`).join('');
+  } catch(_) {}
+
+  body.innerHTML = `
+    <div class="form-group">
+      <label>Tên đăng nhập</label>
+      <input type="text" id="fUsername" value="${user.username}" disabled style="background:var(--surface-2); cursor:not-allowed;" />
+    </div>
+    <div class="form-group">
+      <label>Họ và Tên *</label>
+      <input type="text" id="fFullName" value="${user.fullName}" />
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Vai trò *</label>
+        <select id="fRole">
+          <option value="Viewer" ${user.role === 'Viewer' ? 'selected' : ''}>Viewer</option>
+          <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
+          <option value="HR" ${user.role === 'HR' ? 'selected' : ''}>HR</option>
+          <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
+          <option value="User" ${user.role === 'User' ? 'selected' : ''}>Nhân viên (User)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nhân viên liên kết</label>
+        <select id="fUserEmp">${empOptions}</select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 12px;">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="fIsActive" ${user.isActive ? 'checked' : ''} style="width:auto;" />
+        <span>Tài khoản đang hoạt động (Active)</span>
+      </label>
+    </div>
+    <div id="userModalError" style="color:var(--danger);font-size:13px;font-weight:600;margin-bottom:12px;margin-top:8px;"></div>
+    <div class="form-actions" style="margin-top: 24px;">
+      <button class="btn-secondary" onclick="closeModal()">Hủy</button>
+      <button class="btn-primary" onclick="updateUser(${userId})">💾 Lưu thay đổi</button>
+    </div>
+  `;
+  
+  setTimeout(() => {
+    if (document.getElementById('fUserEmp')) {
+      new TomSelect('#fUserEmp', {
+        create: false,
+        sortField: { field: "text", direction: "asc" }
+      });
+    }
+  }, 10);
+}
+
+function openResetUserPasswordModal(userId) {
+  const user = allUsersList.find(u => u.userId === userId);
+  if (!user) return;
+
+  const overlay = document.getElementById('modalOverlay');
+  const title   = document.getElementById('modalTitle');
+  const body    = document.getElementById('modalBody');
+  overlay.classList.add('open');
+  
+  title.textContent = `Đặt lại mật khẩu cho: ${user.username}`;
+  
+  body.innerHTML = `
+    <div class="form-group">
+      <label>Mật khẩu mới *</label>
+      <input type="password" id="fNewPassword" placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)..." />
+    </div>
+    <div class="form-group">
+      <label>Xác nhận mật khẩu *</label>
+      <input type="password" id="fConfirmPassword" placeholder="Xác nhận mật khẩu mới..." />
+    </div>
+    <div id="userModalError" style="color:var(--danger);font-size:13px;font-weight:600;margin-bottom:12px;margin-top:8px;"></div>
+    <div class="form-actions" style="margin-top: 24px;">
+      <button class="btn-secondary" onclick="closeModal()">Hủy</button>
+      <button class="btn-primary" onclick="submitResetUserPassword(${userId})">💾 Lưu mật khẩu</button>
+    </div>
+  `;
+}
+
+async function saveUser() {
+  const username = document.getElementById('fUsername').value.trim();
+  const fullName = document.getElementById('fFullName').value.trim();
+  const password = document.getElementById('fPassword').value;
+  const role = document.getElementById('fRole').value;
+  const empIdVal = document.getElementById('fUserEmp').value;
+  const employeeId = empIdVal ? parseInt(empIdVal) : null;
+  const errDiv = document.getElementById('userModalError');
+  
+  if (!username || !fullName || !password) {
+    errDiv.textContent = 'Vui lòng nhập đầy đủ các trường bắt buộc!';
+    return;
+  }
+  
+  if (password.length < 8) {
+    errDiv.textContent = 'Mật khẩu phải có tối thiểu 8 ký tự!';
+    return;
+  }
+  
+  errDiv.textContent = '';
+  
+  try {
+    await api('/users', {
+      method: 'POST',
+      body: JSON.stringify({ username, fullName, password, role, employeeId })
+    });
+    closeModal();
+    showToast(`✅ Tạo tài khoản ${username} thành công!`);
+    await renderUsers();
+  } catch(err) {
+    errDiv.textContent = err.message;
+  }
+}
+
+async function updateUser(userId) {
+  const fullName = document.getElementById('fFullName').value.trim();
+  const role = document.getElementById('fRole').value;
+  const empIdVal = document.getElementById('fUserEmp').value;
+  const employeeId = empIdVal ? parseInt(empIdVal) : null;
+  const isActive = document.getElementById('fIsActive').checked;
+  const errDiv = document.getElementById('userModalError');
+  
+  if (!fullName) {
+    errDiv.textContent = 'Vui lòng nhập đầy đủ họ và tên!';
+    return;
+  }
+  
+  errDiv.textContent = '';
+  
+  try {
+    await api(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ fullName, role, employeeId, isActive })
+    });
+    closeModal();
+    showToast(`✅ Cập nhật tài khoản thành công!`);
+    await renderUsers();
+  } catch(err) {
+    errDiv.textContent = err.message;
+  }
+}
+
+async function submitResetUserPassword(userId) {
+  const newPw = document.getElementById('fNewPassword').value;
+  const confirmPw = document.getElementById('fConfirmPassword').value;
+  const errDiv = document.getElementById('userModalError');
+  
+  if (!newPw || !confirmPw) {
+    errDiv.textContent = 'Vui lòng điền đầy đủ thông tin!';
+    return;
+  }
+  
+  if (newPw.length < 8) {
+    errDiv.textContent = 'Mật khẩu mới phải có tối thiểu 8 ký tự!';
+    return;
+  }
+  
+  if (newPw !== confirmPw) {
+    errDiv.textContent = 'Mật khẩu xác nhận không khớp!';
+    return;
+  }
+  
+  errDiv.textContent = '';
+  
+  try {
+    await api(`/users/${userId}/reset-password`, {
+      method: 'PUT',
+      body: JSON.stringify({ newPassword: newPw })
+    });
+    closeModal();
+    showToast(`🔑 Đặt lại mật khẩu thành công!`);
+  } catch(err) {
+    errDiv.textContent = err.message;
+  }
+}
+
+async function deleteUser(userId) {
+  const user = allUsersList.find(u => u.userId === userId);
+  if (!user) return;
+  
+  if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản "${user.username}"?`)) {
+    return;
+  }
+  
+  try {
+    await api(`/users/${userId}`, {
+      method: 'DELETE'
+    });
+    showToast(`🗑️ Đã xóa tài khoản ${user.username}!`);
+    await renderUsers();
+  } catch(err) {
+    // API helper handles error toast
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

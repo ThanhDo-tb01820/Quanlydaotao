@@ -187,6 +187,7 @@ public class LoginResponseDto
     public string Username { get; set; } = "";
     public string FullName { get; set; } = "";
     public string Role { get; set; } = "";
+    public int? EmployeeId { get; set; }
 }
 
 public class ChangePasswordDto
@@ -215,4 +216,59 @@ public class AuditLogDto
     public string Action { get; set; } = "";
     public string Description { get; set; } = "";
     public string CreatedAt { get; set; } = "";
+}
+
+// ─── User Management DTOs ─────────────────────────────────────
+public class UserListDto
+{
+    public int UserId { get; set; }
+    public string Username { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public string Role { get; set; } = "";
+    public int? EmployeeId { get; set; }
+    public string? EmployeeCode { get; set; }
+    public string? EmployeeName { get; set; }
+    public string? DepartmentName { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class CreateUserDto
+{
+    [Required(ErrorMessage = "Tên đăng nhập là bắt buộc")]
+    [MaxLength(50, ErrorMessage = "Tên đăng nhập không được quá 50 ký tự")]
+    public string Username { get; set; } = "";
+
+    [Required(ErrorMessage = "Họ và tên là bắt buộc")]
+    [MaxLength(100, ErrorMessage = "Họ và tên không được quá 100 ký tự")]
+    public string FullName { get; set; } = "";
+
+    [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
+    [MinLength(8, ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự")]
+    public string Password { get; set; } = "";
+
+    [Required(ErrorMessage = "Vai trò là bắt buộc")]
+    public string Role { get; set; } = ""; // Admin, HR, Manager, Viewer, User
+
+    public int? EmployeeId { get; set; }
+}
+
+public class UpdateUserDto
+{
+    [Required(ErrorMessage = "Họ và tên là bắt buộc")]
+    [MaxLength(100, ErrorMessage = "Họ và tên không được quá 100 ký tự")]
+    public string FullName { get; set; } = "";
+
+    [Required(ErrorMessage = "Vai trò là bắt buộc")]
+    public string Role { get; set; } = ""; // Admin, HR, Manager, Viewer, User
+
+    public int? EmployeeId { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class AdminResetPasswordDto
+{
+    [Required(ErrorMessage = "Mật khẩu mới là bắt buộc")]
+    [MinLength(8, ErrorMessage = "Mật khẩu mới phải có ít nhất 8 ký tự")]
+    public string NewPassword { get; set; } = "";
 }
