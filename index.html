@@ -248,10 +248,12 @@
       </div>
       <div class="table-controls">
         <div class="search-box">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="empSearch" placeholder="Tìm theo tên hoặc mã NV..." oninput="debounceFilterEmployees()" onkeydown="if(event.key==='Enter') event.preventDefault();" />
+          <form onsubmit="event.preventDefault(); return false;" style="display:flex;width:100%;align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="empSearch" placeholder="Tìm theo tên hoặc mã NV..." oninput="debounceFilterEmployees()" onkeydown="if(event.key==='Enter') event.preventDefault();" />
+          </form>
         </div>
         <div class="filter-group">
           <select id="deptFilter" onchange="filterEmployees()">
@@ -357,10 +359,12 @@
       </div>
       <div class="table-controls">
         <div class="search-box">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="trainSearch" placeholder="Tìm theo tên khóa học hoặc nhân viên..." oninput="filterTrainings()" onkeydown="if(event.key==='Enter') event.preventDefault();" />
+          <form onsubmit="event.preventDefault(); return false;" style="display:flex;width:100%;align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="trainSearch" placeholder="Tìm theo tên khóa học hoặc nhân viên..." oninput="filterTrainings()" onkeydown="if(event.key==='Enter') event.preventDefault();" />
+          </form>
         </div>
         <div class="filter-group">
           <select id="trainStatusFilter" onchange="filterTrainings()">
@@ -495,10 +499,12 @@
       
       <div class="table-controls">
         <div class="search-box">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="userSearch" placeholder="Tìm theo tên tài khoản hoặc họ tên..." oninput="filterUsers()" onkeydown="if(event.key==='Enter') event.preventDefault();" />
+          <form onsubmit="event.preventDefault(); return false;" style="display:flex;width:100%;align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="userSearch" placeholder="Tìm theo tên tài khoản hoặc họ tên..." oninput="filterUsers()" onkeydown="if(event.key==='Enter') event.preventDefault();" />
+          </form>
         </div>
         <div class="filter-group">
           <select id="userRoleFilter" onchange="filterUsers()">
