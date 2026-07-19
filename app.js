@@ -206,6 +206,8 @@ async function renderDashboard() {
     );
     await renderDeptBars();
     renderDashboardAlerts(alerts);
+    renderDeptDashboard(); // Đào tạo theo phòng ban (async, không block)
+    renderNotificationDropdown(); // Dropdown cảnh báo
 
   } catch (e) {
     document.getElementById('dashboardCards').innerHTML =
@@ -575,15 +577,22 @@ async function viewEmployee(empId) {
 
     const tbody = document.getElementById('detailTrainingsBody');
     if (!emp.trainings?.length) {
-      tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><p>Chưa có khóa đào tạo nào được ghi nhận</p></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><p>Chưa có khóa đào tạo nào được ghi nhận</p></td></tr>`;
     } else {
       tbody.innerHTML = emp.trainings.map(tr => `
         <tr>
           <td>${tr.courseName}</td>
           <td>${tr.organizer}</td>
+          <td>
+            ${tr.isLifetime
+              ? `<span class="badge badge-lifetime">♾️ Vĩnh viễn</span>`
+              : tr.needsRenewal
+                ? `<span class="badge badge-expiry">⏳ Hạn ${tr.renewalAfterYears}năm</span>`
+                : `<span class="badge badge-gray">⏳ Có hạn</span>`}
+          </td>
           <td><strong>${tr.actualHours}</strong> <span style="font-size:12px;color:var(--text-muted);">/ ${tr.trainingHours}</span></td>
-          <td>${formatDate(tr.issueDate)}</td>
-          <td>${formatDate(tr.expiryDate)}</td>
+          <td><strong>${formatDate(tr.issueDate)}</strong></td>
+          <td>${tr.isLifetime ? '<span style="color:var(--primary);font-weight:600;">♾️ Mãi mãi</span>' : `<strong>${formatDate(tr.expiryDate)}</strong>${tr.needsRenewal ? ` <small style="color:var(--warning);">(Học lại sau ${tr.renewalAfterYears} năm)</small>` : ''}`}</td>
           <td>${tr.hasEvidence ? `<a href="${tr.certificateUrl}" target="_blank" class="badge badge-green" style="text-decoration:none;">📎 Xem ảnh</a>` : `<span class="badge badge-red">⚠️ Chưa có</span>`}</td>
           <td><span class="badge ${tr.badgeClass}">${tr.statusLabel}</span></td>
         </tr>`).join('');
@@ -653,9 +662,16 @@ function renderTrainingsTable() {
       <td><span class="badge badge-gray">${tr.departmentName}</span></td>
       <td>${tr.courseName}</td>
       <td>${tr.organizer}</td>
+      <td>
+        ${tr.isLifetime
+          ? `<span class="badge badge-lifetime">♾️ Vĩnh viễn</span>`
+          : tr.needsRenewal
+            ? `<span class="badge badge-expiry">⏳ Hạn ${tr.renewalAfterYears} năm</span>`
+            : `<span class="badge badge-gray">⏳ Có thời hạn</span>`}
+      </td>
       <td><strong>${tr.actualHours}</strong> <span style="font-size:12px;color:var(--text-muted);">/ ${tr.trainingHours}</span></td>
-      <td>${formatDate(tr.issueDate)}</td>
-      <td>${formatDate(tr.expiryDate)}</td>
+      <td><strong>${formatDate(tr.issueDate)}</strong></td>
+      <td><strong>${tr.isLifetime ? '♾️ Mãi mãi' : formatDate(tr.expiryDate)}</strong></td>
       <td>${tr.hasEvidence ? `<a href="${tr.certificateUrl}" target="_blank" class="badge badge-green" style="text-decoration:none;">📎 Xem ảnh</a>` : `<span class="badge badge-red">⚠️ Chưa có</span>`}</td>
       <td><span class="badge ${tr.badgeClass}">${tr.statusLabel}</span></td>
     </tr>`).join('');
@@ -833,7 +849,7 @@ async function openModal(type) {
       empOptions = emps.map(e =>
         `<option value="${e.employeeId}" ${e.employeeId === currentDetailEmpId ? 'selected' : ''}>${e.fullName} (${e.employeeCode})</option>`).join('');
       courseOptions = crs.map(c =>
-        `<option value="${c.courseId}" data-hours="${c.defaultHours}" data-organizer="${c.organizer}">${c.courseName}</option>`).join('');
+        `<option value="${c.courseId}" data-hours="${c.defaultHours}" data-organizer="${c.organizer}" data-is-lifetime="${c.isLifetime}" data-renewal-years="${c.requiresRenewalAfterYears || 0}">${c.courseName}${c.isLifetime ? ' ♾️' : c.requiresRenewalAfterYears ? ` (${c.requiresRenewalAfterYears}n)` : ''}</option>`).join('');
     } catch (_) {}
 
     title.textContent = 'Thêm Chứng chỉ Đào tạo';
@@ -851,6 +867,26 @@ async function openModal(type) {
           <option value="0">— Chọn khóa học —</option>
           ${courseOptions}
         </select>
+      </div>
+      <!-- Loại chứng chỉ -->
+      <div class="cert-type-selector">
+        <label class="cert-type-label">Loại chứng chỉ</label>
+        <div class="cert-type-options">
+          <label class="cert-type-option" id="certTypeExpiry">
+            <input type="radio" name="certType" value="expiry" checked onchange="onCertTypeChange()" />
+            <span class="cert-type-icon">⏳</span>
+            <span>Có thời hạn</span>
+          </label>
+          <label class="cert-type-option" id="certTypeLifetime">
+            <input type="radio" name="certType" value="lifetime" onchange="onCertTypeChange()" />
+            <span class="cert-type-icon">♾️</span>
+            <span>Vĩnh viễn (Không cần học lại)</span>
+          </label>
+        </div>
+        <!-- Cảnh báo học lại -->
+        <div class="renewal-warning" id="renewalWarning" style="display:none;">
+          ⚠️ Chứng chỉ này có thời hạn - cần đào tạo lại sau <strong id="renewalYearsText">N</strong> năm
+        </div>
       </div>
       <div class="form-group">
         <label>Tên khóa học / Chứng chỉ *</label>
@@ -870,14 +906,14 @@ async function openModal(type) {
           <input type="number" id="fActualHours" placeholder="24" min="0" />
         </div>
       </div>
-      <div class="form-grid">
+      <div class="form-grid" id="dateSection">
         <div class="form-group">
           <label>Ngày cấp *</label>
-          <input type="date" id="fIssue" />
+          <input type="date" id="fIssue" onchange="onIssueDateChange()" />
         </div>
-        <div class="form-group">
-          <label>Ngày hết hạn *</label>
-          <input type="date" id="fExpiry" />
+        <div class="form-group" id="expiryGroup">
+          <label>Ngày hết hạn</label>
+          <input type="date" id="fExpiry" placeholder="Tự động tính nếu có số năm học lại" />
         </div>
       </div>
       <div class="form-group">
@@ -911,16 +947,208 @@ async function openModal(type) {
 function onCourseSelect() {
   const sel = document.getElementById('fCourse');
   const opt = sel.options[sel.selectedIndex];
-  if (opt.value !== '0') {
+  if (opt && opt.value !== '0') {
     document.getElementById('fCourseName').value  = opt.text;
     document.getElementById('fOrganizer').value   = opt.dataset.organizer || '';
     document.getElementById('fHours').value       = opt.dataset.hours || '';
-    if(document.getElementById('fActualHours')) { document.getElementById('fActualHours').value = opt.dataset.hours || ''; }
+    if (document.getElementById('fActualHours')) document.getElementById('fActualHours').value = opt.dataset.hours || '';
+    // Cập nhật loại chứng chỉ nếu course có IsLifetime
+    const isLtm = opt.dataset.isLifetime === 'true';
+    const renewalYears = opt.dataset.renewalYears;
+    if (isLtm) {
+      document.querySelector('input[name="certType"][value="lifetime"]').checked = true;
+    } else {
+      document.querySelector('input[name="certType"][value="expiry"]').checked = true;
+    }
+    onCertTypeChange(renewalYears ? parseInt(renewalYears) : null);
+  }
+}
+
+// Khi thay đổi loại chứng chỉ
+function onCertTypeChange(renewalYears) {
+  const isLifetime = document.querySelector('input[name="certType"]:checked')?.value === 'lifetime';
+  const expiryGroup = document.getElementById('expiryGroup');
+  const renewalWarn = document.getElementById('renewalWarning');
+  if (isLifetime) {
+    if (expiryGroup) expiryGroup.style.display = 'none';
+    if (renewalWarn) renewalWarn.style.display = 'none';
+    const fExpiry = document.getElementById('fExpiry');
+    if (fExpiry) fExpiry.value = '';
+  } else {
+    if (expiryGroup) expiryGroup.style.display = '';
+    if (renewalWarn && renewalYears) {
+      document.getElementById('renewalYearsText').textContent = renewalYears;
+      renewalWarn.style.display = 'block';
+    } else if (renewalWarn) {
+      renewalWarn.style.display = 'none';
+    }
+  }
+}
+
+// Tự động tính ExpiryDate khi có IssueDate + số năm học lại
+function onIssueDateChange() {
+  const isLifetime = document.querySelector('input[name="certType"]:checked')?.value === 'lifetime';
+  if (isLifetime) return;
+  const issueVal = document.getElementById('fIssue')?.value;
+  const sel = document.getElementById('fCourse');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const renewalYears = opt ? parseInt(opt.dataset.renewalYears) : 0;
+  if (issueVal && renewalYears > 0) {
+    const issueDate = new Date(issueVal);
+    issueDate.setFullYear(issueDate.getFullYear() + renewalYears);
+    const yyyy = issueDate.getFullYear();
+    const mm   = String(issueDate.getMonth() + 1).padStart(2, '0');
+    const dd   = String(issueDate.getDate()).padStart(2, '0');
+    document.getElementById('fExpiry').value = `${yyyy}-${mm}-${dd}`;
   }
 }
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  DASHBOARD THEO PHÒNG BAN
+// ─────────────────────────────────────────────────────────────
+async function renderDeptDashboard() {
+  const grid = document.getElementById('deptDashboardGrid');
+  if (!grid) return;
+  try {
+    const depts = await api('/dashboard/by-department');
+    if (!depts || !depts.length) {
+      grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);grid-column:1/-1">✅ Tất cả phòng ban đều đạt yêu cầu!</div>';
+      return;
+    }
+    grid.innerHTML = depts.map(dept => {
+      const alertColors = { green: '#10b981', amber: '#f59e0b', orange: '#f97316', red: '#ef4444' };
+      const color = alertColors[dept.alertLevel] || '#10b981';
+      const pct = dept.compliancePercent;
+      return `
+      <div class="dept-card" style="--dept-color:${color}" id="deptCard_${dept.departmentId}">
+        <div class="dept-card-header" onclick="toggleDeptExpand(${dept.departmentId})">
+          <div class="dept-card-title">
+            <span class="dept-alert-dot" style="background:${color}"></span>
+            <strong>${dept.departmentName}</strong>
+          </div>
+          <div class="dept-card-stats">
+            <span class="dept-stat compliant">✅ ${dept.compliantEmployees}</span>
+            <span class="dept-stat total">${dept.totalEmployees} NV</span>
+          </div>
+          <div class="dept-compliance-bar">
+            <div class="dept-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="dept-card-footer">
+            <span class="dept-pct" style="color:${color}">${pct}% đạt</span>
+            ${dept.expiredCertificates > 0 ? `<span class="dept-warn-badge">🔴 ${dept.expiredCertificates} hết hạn</span>` : ''}
+            ${dept.expiringCertificates > 0 ? `<span class="dept-warn-badge amber">🟡 ${dept.expiringCertificates} sắp hết</span>` : ''}
+          </div>
+          <div class="dept-expand-icon" id="deptExpandIcon_${dept.departmentId}">▼</div>
+        </div>
+        <div class="dept-emp-list" id="deptEmpList_${dept.departmentId}" style="display:none;">
+          ${dept.employees.map(emp => `
+            <div class="dept-emp-row ${emp.isCompliant ? '' : 'non-compliant'}">
+              <div class="dept-emp-info">
+                <div class="dept-emp-name">${emp.fullName}</div>
+                <div class="dept-emp-pos">${emp.position}</div>
+              </div>
+              <div class="dept-emp-status">
+                <span class="badge ${emp.isCompliant ? 'badge-green' : 'badge-red'}">
+                  ${emp.isCompliant ? '✅ Đạt' : `❌ Thiếu ${emp.missingHours} tiết`}
+                </span>
+                ${emp.expiredCerts > 0 ? `<span class="badge badge-red">🔴 ${emp.expiredCerts} CC hết hạn</span>` : ''}
+                ${emp.expiringCerts > 0 ? `<span class="badge badge-orange">🟠 ${emp.expiringCerts} sắp hết</span>` : ''}
+              </div>
+              <button class="btn-view-emp" onclick="viewEmployee(${emp.employeeId})" title="Xem chi tiết">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Xem
+              </button>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    if (grid) grid.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1">⚠️ Không tải được thống kê phòng ban</div>';
+  }
+}
+
+function toggleDeptExpand(deptId) {
+  const list = document.getElementById(`deptEmpList_${deptId}`);
+  const icon = document.getElementById(`deptExpandIcon_${deptId}`);
+  if (!list) return;
+  if (list.style.display === 'none') {
+    list.style.display = 'block';
+    if (icon) icon.textContent = '▲';
+  } else {
+    list.style.display = 'none';
+    if (icon) icon.textContent = '▼';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  NOTIFICATION DROPDOWN
+// ─────────────────────────────────────────────────────────────
+function toggleNotifDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('notifDropdown');
+  if (!dd) return;
+  const isOpen = dd.classList.contains('open');
+  if (!isOpen) {
+    dd.classList.add('open');
+    renderNotificationDropdown();
+  } else {
+    dd.classList.remove('open');
+  }
+}
+
+function closeNotifDropdown() {
+  const dd = document.getElementById('notifDropdown');
+  if (dd) dd.classList.remove('open');
+}
+
+// Đóng dropdown khi click ra ngoài
+document.addEventListener('click', function(e) {
+  const wrapper = document.getElementById('notifWrapper');
+  if (wrapper && !wrapper.contains(e.target)) closeNotifDropdown();
+});
+
+async function renderNotificationDropdown() {
+  const body = document.getElementById('notifDropdownBody');
+  if (!body) return;
+  try {
+    const alerts = await api('/dashboard/alerts');
+    // Chỉ lấy cảnh báo chứng chỉ sắp hết / đã hết hạn
+    const certAlerts = alerts.filter(a => a.alertType === 'red' || a.alertType === 'orange' || a.alertType === 'amber');
+    const urgent = certAlerts.length;
+    document.getElementById('notifCount').textContent = urgent;
+    document.getElementById('alertBadge').textContent = urgent;
+
+    if (!certAlerts.length) {
+      body.innerHTML = '<div style="text-align:center;padding:20px;font-size:13px;color:var(--text-muted);"><div style="font-size:24px;margin-bottom:8px;">✅</div>Không có cảnh báo mới!</div>';
+      return;
+    }
+
+    body.innerHTML = certAlerts.slice(0, 10).map(a => {
+      const icon = a.alertType === 'red' ? '🔴' : a.alertType === 'orange' ? '🟠' : '🟡';
+      const daysText = a.daysLeft < 0
+        ? `<span style="color:#ef4444;font-weight:700;">Quá hạn ${Math.abs(a.daysLeft)} ngày</span>`
+        : `<span style="color:#f97316;font-weight:600;">Còn ${a.daysLeft} ngày</span>`;
+      return `
+      <div class="notif-item" onclick="viewEmployee(${a.employeeId});closeNotifDropdown()">
+        <div class="notif-item-icon">${icon}</div>
+        <div class="notif-item-content">
+          <div class="notif-item-name">${a.employeeName}</div>
+          <div class="notif-item-course">${a.courseName}</div>
+          <div class="notif-item-dates">
+            <span>📅 Cấp: <strong>${formatDate(a.issueDate)}</strong></span>
+            <span>⏰ Hạn: <strong>${formatDate(a.expiryDate)}</strong></span>
+          </div>
+          <div>${daysText}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    if (body) body.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:13px;">Không tải được thông báo</div>';
+  }
 }
 
 async function saveEmployee() {
@@ -1647,7 +1875,19 @@ function displayUsersTable(list) {
     <tr>
       <td><strong style="color:var(--brand);">${u.username}</strong></td>
       <td>${u.fullName}</td>
-      <td><span class="badge ${u.role === 'Admin' ? 'badge-red' : u.role === 'HR' ? 'badge-green' : u.role === 'Manager' ? 'badge-blue' : u.role === 'User' ? 'badge-gray-red' : 'badge-gray'}">${u.role === 'User' ? 'Nhân viên' : u.role}</span></td>
+      <td>
+        ${(() => {
+          const roleMap = {
+            'Admin':   ['badge-role-admin',   '👑 Admin'],
+            'HR':      ['badge-role-hr',       '📋 HR'],
+            'Manager': ['badge-role-manager',  '📊 Quản lý'],
+            'Viewer':  ['badge-role-viewer',   '👁️ Viewer'],
+            'User':    ['badge-role-user',     '👤 Nhân viên'],
+          };
+          const [cls, lbl] = roleMap[u.role] || ['badge-gray', u.role];
+          return `<span class="badge ${cls}">${lbl}</span>`;
+        })()}
+      </td>
       <td>${u.employeeName ? `<code>${u.employeeCode}</code> - ${u.employeeName}` : '<em style="color:var(--text-muted);">Không có</em>'}</td>
       <td>${u.departmentName ? `<span class="badge badge-gray">${u.departmentName}</span>` : '—'}</td>
       <td><span class="badge ${u.isActive ? 'badge-green' : 'badge-gray'}">${u.isActive ? '✓ Hoạt động' : '✗ Khóa'}</span></td>

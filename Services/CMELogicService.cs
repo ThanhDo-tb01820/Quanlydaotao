@@ -40,10 +40,14 @@ public class CMELogicService
     private static int GetInt(List<SystemSetting> list, string key, int def)
         => int.TryParse(list.FirstOrDefault(s => s.SettingKey == key)?.SettingValue, out var v) ? v : def;
 
-    // ─── Trạng thái chứng chỉ ────────────────────────────────
+    // ─── Trạng thái chứng chỉ ───────────────────────────────────
     public (string Label, string CssClass, string BadgeClass, int DaysLeft) GetCertStatus(
-        DateOnly? expiryDate, int warn30, int warn60, bool isCompleted = false)
+        DateOnly? expiryDate, int warn30, int warn60, bool isCompleted = false, bool isLifetime = false)
     {
+        // Chứng chỉ vĩnh viễn → luôn hợp lệ, không cảnh báo
+        if (isLifetime)
+            return ("♾️ Vĩnh viễn", "green", "badge-lifetime", 99999);
+
         if (isCompleted)
             return ("✅ Hoàn thành", "green", "badge-green", 9999);
 
@@ -93,13 +97,25 @@ public class CMELogicService
         return $"{req.Scheme}://{req.Host}/uploads/{fileName}";
     }
 
-    // ─── Map Training → DTO ──────────────────────────────────
+    // ─── Map Training → DTO ──────────────────────────────────────────
     public TrainingRecordDto MapTraining(EmployeeTraining t, int warn30, int warn60)
     {
         var actualH = t.ActualHours > 0 ? t.ActualHours : t.TrainingHours;
         bool isCompleted = actualH >= t.TrainingHours && t.TrainingHours > 0;
-        var (label, _, badge, days) = GetCertStatus(t.ExpiryDate, warn30, warn60, isCompleted);
-        
+        bool isLifetime  = t.Course?.IsLifetime ?? false;
+        bool needsRenewal = !isLifetime && (t.Course?.RequiresRenewalAfterYears ?? 0) > 0;
+        int? renewalYears = needsRenewal ? t.Course?.RequiresRenewalAfterYears : null;
+
+        // Nếu khóa học có yêu cầu học lại và chưa có ExpiryDate, tính tự động
+        var effectiveExpiry = t.ExpiryDate;
+        if (effectiveExpiry == null && needsRenewal && t.IssueDate.HasValue && renewalYears.HasValue)
+            effectiveExpiry = t.IssueDate.Value.AddYears(renewalYears.Value);
+
+        var (label, _, badge, days) = GetCertStatus(effectiveExpiry, warn30, warn60, isCompleted, isLifetime);
+
+        string certTypeLabel = isLifetime ? "Vĩnh viễn" : (needsRenewal ? $"Hạn {renewalYears} năm" : "Có thời hạn");
+        string certTypeBadge = isLifetime ? "badge-lifetime" : "badge-expiry";
+
         return new TrainingRecordDto
         {
             TrainingId      = t.TrainingId,
@@ -113,7 +129,7 @@ public class CMELogicService
             TrainingHours   = t.TrainingHours,
             ActualHours     = actualH,
             IssueDate       = t.IssueDate?.ToString("yyyy-MM-dd") ?? "",
-            ExpiryDate      = t.ExpiryDate?.ToString("yyyy-MM-dd") ?? "",
+            ExpiryDate      = effectiveExpiry?.ToString("yyyy-MM-dd") ?? "",
             Notes           = t.Notes,
             CertificateFile = t.CertificateFile,
             CertificateUrl  = BuildFileUrl(t.CertificateFile),
@@ -121,6 +137,11 @@ public class CMELogicService
             StatusLabel     = label,
             BadgeClass      = badge,
             DaysLeft        = days,
+            IsLifetime      = isLifetime,
+            NeedsRenewal    = needsRenewal,
+            RenewalAfterYears = renewalYears,
+            CertTypeLabel   = certTypeLabel,
+            CertTypeBadge   = certTypeBadge,
         };
     }
 
@@ -130,9 +151,15 @@ public class CMELogicService
         var (compliant, total, missing) = GetCompliance(emp.Trainings, required);
         var certWarnings = emp.Trainings.Count(t =>
         {
+            bool ltm = t.Course?.IsLifetime ?? false;
+            if (ltm) return false; // vĩnh viễn không cảnh báo
             var actualH = t.ActualHours > 0 ? t.ActualHours : t.TrainingHours;
             bool isCompleted = actualH >= t.TrainingHours && t.TrainingHours > 0;
-            var (_, css, _, _) = GetCertStatus(t.ExpiryDate, warn30, warn60, isCompleted);
+            var effectiveExp = t.ExpiryDate;
+            bool needsRen = !ltm && (t.Course?.RequiresRenewalAfterYears ?? 0) > 0;
+            if (effectiveExp == null && needsRen && t.IssueDate.HasValue)
+                effectiveExp = t.IssueDate.Value.AddYears(t.Course!.RequiresRenewalAfterYears!.Value);
+            var (_, css, _, _) = GetCertStatus(effectiveExp, warn30, warn60, isCompleted, ltm);
             return css != "green";
         });
         // Số hồ sơ chưa có minh chứng
@@ -175,25 +202,42 @@ public class CMELogicService
             // 1. Cảnh báo chứng chỉ hết hạn / sắp hết hạn
             foreach (var tr in emp.Trainings)
             {
+                bool isLifetime = tr.Course?.IsLifetime ?? false;
+                bool needsRenewal = !isLifetime && (tr.Course?.RequiresRenewalAfterYears ?? 0) > 0;
+                int? renewalYears = needsRenewal ? tr.Course?.RequiresRenewalAfterYears : null;
+
+                // Chứng chỉ vĩnh viễn: bỏ qua hoàn toàn
+                if (isLifetime) continue;
+
+                // Tính ExpiryDate hiệu quả (tự động nếu có yêu cầu học lại)
+                var effectiveExpiry = tr.ExpiryDate;
+                if (effectiveExpiry == null && needsRenewal && tr.IssueDate.HasValue && renewalYears.HasValue)
+                    effectiveExpiry = tr.IssueDate.Value.AddYears(renewalYears.Value);
+
                 var actualH = tr.ActualHours > 0 ? tr.ActualHours : tr.TrainingHours;
                 bool isCompleted = actualH >= tr.TrainingHours && tr.TrainingHours > 0;
                 var (label, cssClass, badge, daysLeft) = GetCertStatus(
-                    tr.ExpiryDate, cfg.UrgentWarningDays, cfg.ExpiryWarningDays, isCompleted);
+                    effectiveExpiry, cfg.UrgentWarningDays, cfg.ExpiryWarningDays, isCompleted, false);
 
                 if (cssClass != "green")
                 {
                     alerts.Add(new AlertDto
                     {
-                        EmployeeCode = emp.EmployeeCode,
-                        EmployeeName = emp.FullName,
-                        Department   = emp.Department?.DepartmentName ?? "",
-                        CourseName   = tr.Course?.CourseName ?? "",
-                        ExpiryDate   = tr.ExpiryDate?.ToString("yyyy-MM-dd") ?? "",
-                        DaysLeft     = daysLeft,
-                        AlertType    = cssClass,
-                        StatusLabel  = label,
-                        BadgeClass   = badge,
-                        AlertKind    = "cert",
+                        EmployeeCode  = emp.EmployeeCode,
+                        EmployeeName  = emp.FullName,
+                        EmployeeId    = emp.EmployeeId,
+                        Department    = emp.Department?.DepartmentName ?? "",
+                        CourseName    = tr.Course?.CourseName ?? "",
+                        IssueDate     = tr.IssueDate?.ToString("yyyy-MM-dd"),
+                        ExpiryDate    = effectiveExpiry?.ToString("yyyy-MM-dd") ?? "",
+                        DaysLeft      = daysLeft,
+                        AlertType     = cssClass,
+                        StatusLabel   = label,
+                        BadgeClass    = badge,
+                        AlertKind     = "cert",
+                        IsLifetime    = false,
+                        NeedsRenewal  = needsRenewal,
+                        RenewalAfterYears = renewalYears,
                     });
                 }
 
@@ -246,5 +290,113 @@ public class CMELogicService
             .OrderBy(a => order.GetValueOrDefault(a.AlertType, 5))
             .ThenBy(a => a.DaysLeft ?? 9999)
             .ToList();
+    }
+
+    // ─── Build thống kê theo phòng ban ────────────────────────────────
+    public async Task<List<DepartmentStatsDto>> BuildDepartmentStatsAsync()
+    {
+        var cfg = await GetSettingsAsync();
+        var employees = await _db.Employees
+            .Where(e => e.IsActive)
+            .Include(e => e.Department)
+            .Include(e => e.Trainings).ThenInclude(t => t.Course)
+            .ToListAsync();
+
+        var grouped = employees.GroupBy(e => new { e.DepartmentId, Name = e.Department?.DepartmentName ?? "" });
+        var result  = new List<DepartmentStatsDto>();
+
+        foreach (var g in grouped.OrderBy(g => g.Key.Name))
+        {
+            var empList      = g.ToList();
+            int compliant    = 0;
+            int nonCompliant = 0;
+            int expiredCerts = 0;
+            int expiringCerts= 0;
+            var empSummaries = new List<EmployeeCertSummaryDto>();
+
+            foreach (var emp in empList)
+            {
+                var (comp, total, missing) = GetCompliance(emp.Trainings, cfg.RequiredHours2Years);
+                if (comp) compliant++; else nonCompliant++;
+
+                int expiredE  = 0;
+                int expiringE = 0;
+                var certList  = new List<CertBriefDto>();
+
+                foreach (var tr in emp.Trainings)
+                {
+                    bool isLtm   = tr.Course?.IsLifetime ?? false;
+                    bool needsRen= !isLtm && (tr.Course?.RequiresRenewalAfterYears ?? 0) > 0;
+                    var effectiveExp = tr.ExpiryDate;
+                    if (effectiveExp == null && needsRen && tr.IssueDate.HasValue)
+                        effectiveExp = tr.IssueDate.Value.AddYears(tr.Course!.RequiresRenewalAfterYears!.Value);
+
+                    var actualH  = tr.ActualHours > 0 ? tr.ActualHours : tr.TrainingHours;
+                    bool isDone  = actualH >= tr.TrainingHours && tr.TrainingHours > 0;
+                    var (lbl, css, badge, days) = GetCertStatus(
+                        effectiveExp, cfg.UrgentWarningDays, cfg.ExpiryWarningDays, isDone, isLtm);
+
+                    if (!isLtm)
+                    {
+                        if (css == "red")    { expiredE++; expiredCerts++; }
+                        if (css == "orange" || css == "amber") { expiringE++; expiringCerts++; }
+                    }
+
+                    certList.Add(new CertBriefDto
+                    {
+                        TrainingId        = tr.TrainingId,
+                        CourseName        = tr.Course?.CourseName ?? "",
+                        IssueDate         = tr.IssueDate?.ToString("yyyy-MM-dd") ?? "",
+                        ExpiryDate        = effectiveExp?.ToString("yyyy-MM-dd") ?? "",
+                        IsLifetime        = isLtm,
+                        NeedsRenewal      = needsRen,
+                        RenewalAfterYears = needsRen ? tr.Course?.RequiresRenewalAfterYears : null,
+                        StatusLabel       = lbl,
+                        BadgeClass        = badge,
+                        DaysLeft          = days,
+                    });
+                }
+
+                string statusLvl = comp ? "green" : (expiredE > 0 ? "red" : expiringE > 0 ? "orange" : "amber");
+                empSummaries.Add(new EmployeeCertSummaryDto
+                {
+                    EmployeeId     = emp.EmployeeId,
+                    EmployeeCode   = emp.EmployeeCode,
+                    FullName       = emp.FullName,
+                    Position       = emp.Position,
+                    DepartmentName = emp.Department?.DepartmentName ?? "",
+                    IsCompliant    = comp,
+                    TotalHours     = total,
+                    MissingHours   = missing,
+                    ExpiredCerts   = expiredE,
+                    ExpiringCerts  = expiringE,
+                    StatusLevel    = statusLvl,
+                    Certificates   = certList,
+                });
+            }
+
+            int pct = empList.Count > 0 ? (compliant * 100 / empList.Count) : 100;
+            string alertLevel = nonCompliant == 0 ? "green" :
+                                expiredCerts  > 0 ? "red"   :
+                                expiringCerts > 0 ? "orange": "amber";
+
+            result.Add(new DepartmentStatsDto
+            {
+                DepartmentId          = g.Key.DepartmentId,
+                DepartmentName        = g.Key.Name,
+                TotalEmployees        = empList.Count,
+                CompliantEmployees    = compliant,
+                NonCompliantEmployees = nonCompliant,
+                ExpiredCertificates   = expiredCerts,
+                ExpiringCertificates  = expiringCerts,
+                CompliancePercent     = pct,
+                AlertLevel            = alertLevel,
+                Employees             = empSummaries
+                    .OrderBy(e => e.IsCompliant)
+                    .ThenByDescending(e => e.ExpiredCerts)
+                    .ToList(),
+            });
+        }
+        return result.OrderBy(d => d.CompliancePercent).ToList();
     }
 }

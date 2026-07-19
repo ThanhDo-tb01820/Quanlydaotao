@@ -1,4 +1,4 @@
-﻿-- AUTO-GENERATED IMPORT SCRIPT
+-- AUTO-GENERATED IMPORT SCRIPT
 -- Database: QLDAOTAO
 
 SET NOCOUNT ON;
@@ -40,7 +40,7 @@ INSERT INTO Departments (DepartmentCode, DepartmentName) VALUES (N'DEPT029', N'n
 -- 2. EMPLOYEES
 -- =============================================
 INSERT INTO Employees (EmployeeCode, FullName, Gender, DateOfBirth, DepartmentId, Position, JoinDate, IsActive, IsDeleted) VALUES (N'016707', N'Ngô Lê Quang Tín', N'Không rõ', '1985-06-01', (SELECT TOP 1 DepartmentId FROM Departments WHERE DepartmentName = N'Ban Giám Đốc Bệnh viện'), NGiám Đốc Tài Chính', '2025-04-01', 1, 0);
-INSERT INTO Employees (EmployeeCode, FullName, Gender, DateOfBirth, DepartmentId, Position, JoinDate, IsActive, IsDeleted) VALUES (N'004685', N'PHẠM THỊ KIM NGÂN', N'Không rõ', '1986-12-08', (SELECT TOP 1 DepartmentId FROM Departments WHERE DepartmentName = N'Ban Giám Đốc Bệnh viện'), NTrưởng phòng Tài chính kiêm Kế toán trưởng', '2017-11-01', 1, 0);
+
 INSERT INTO Employees (EmployeeCode, FullName, Gender, DateOfBirth, DepartmentId, Position, JoinDate, IsActive, IsDeleted) VALUES (N'017284', N'Trần Văn Thuận', N'Không rõ', '1969-04-25', (SELECT TOP 1 DepartmentId FROM Departments WHERE DepartmentName = N'Ban Giám Đốc Bệnh viện'), NGiám Đốc Y Khoa', '2025-07-28', 1, 0);
 INSERT INTO Employees (EmployeeCode, FullName, Gender, DateOfBirth, DepartmentId, Position, JoinDate, IsActive, IsDeleted) VALUES (N'002436', N'BÙI ANH DIỆU', N'Không rõ', '1984-07-21', (SELECT TOP 1 DepartmentId FROM Departments WHERE DepartmentName = N'Cấp cứu'), NĐiều dưỡng', '2015-05-25', 1, 0);
 INSERT INTO Employees (EmployeeCode, FullName, Gender, DateOfBirth, DepartmentId, Position, JoinDate, IsActive, IsDeleted) VALUES (N'017032', N'CAO ÔNG THANH TÚ', N'Không rõ', '2001-08-22', (SELECT TOP 1 DepartmentId FROM Departments WHERE DepartmentName = N'Cấp cứu'), NĐiều dưỡng cấp 1', '2025-06-02', 1, 0);
@@ -978,12 +978,7 @@ INSERT INTO TrainingCourses (CourseCode, CourseName, Organizer, DefaultHours) VA
 -- =============================================
 INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'016707'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Nâng cao công tác kiểm soát nhiễm khuẩn đối với phẫu thuật nội soi trong bệnh viện'), 1, 1, '2025-09-26', '2025-09-26', N'Chứng nhận');
 INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'016707'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Kiểm soát nhiễm khuẩn cơ bản'), 40, 40, '2025-11-27', '2025-12-15', N'Chứng nhận');
-INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'004685'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Quản lý bệnh viện'), 40, 40, '2020-05-29', '2020-06-01', N'Chứng chỉ');
-INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'004685'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Giám Đốc Tài chính'), 96, 96, '2020-07-15', '2020-11-15', N'Chứng nhận');
-INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'004685'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Năng lực quản trị cho quản lý cấp trung'), 36, 36, '2020-11-28', '2021-01-23', N'Chứng nhận');
-INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'004685'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Đấu thầu cơ bản'), 24, 24, '2021-05-28', '2021-05-30', N'Chứng chỉ');
-INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'004685'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Kiểm soát nhiễm khuẩn 5 ngày'), 40, 40, '2021-10-25', '2021-10-29', N'Chứng nhận');
-INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'004685'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'VBA & MACRO IN EXCEL'), 12, 12, '2021-11-02', '2021-11-24', N'Chứng nhận');
+
 INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'017284'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'Nâng cao công tác kiểm soát nhiễm khuẩn đối với phẫu thuật nội soi trong bệnh viện'), 2, 2, '2025-09-26', '2025-09-26', N'Chứng nhận');
 INSERT INTO EmployeeTrainings (EmployeeId, CourseId, TrainingHours, ActualHours, IssueDate, ExpiryDate, Notes) VALUES ((SELECT TOP 1 EmployeeId FROM Employees WHERE EmployeeCode = N'002436'), (SELECT TOP 1 CourseId FROM TrainingCourses WHERE CourseName = N'An toàn trong vận chuyển người bệnh.
 Phòng ngừa sai sót trong sử dụng thuốc'), 4, 4, '2016-12-14', '2016-12-14', N'Chứng nhận');

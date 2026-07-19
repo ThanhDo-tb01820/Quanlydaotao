@@ -13,18 +13,68 @@ public class DashboardSummaryDto
     public int UrgentCertificates { get; set; }       // Khẩn cấp (≤30 ngày)
 }
 
+// ─── Thống kê theo Phòng ban / Chuyên môn ────────────────────
+public class DepartmentStatsDto
+{
+    public int DepartmentId { get; set; }
+    public string DepartmentName { get; set; } = "";
+    public int TotalEmployees { get; set; }
+    public int CompliantEmployees { get; set; }
+    public int NonCompliantEmployees { get; set; }
+    public int ExpiringCertificates { get; set; }      // Sắp hết hạn
+    public int ExpiredCertificates { get; set; }       // Đã hết hạn
+    public int CompliancePercent { get; set; }         // % đạt
+    public string AlertLevel { get; set; } = "green";  // green | amber | orange | red
+    public List<EmployeeCertSummaryDto> Employees { get; set; } = new();
+}
+
+public class EmployeeCertSummaryDto
+{
+    public int EmployeeId { get; set; }
+    public string EmployeeCode { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public string Position { get; set; } = "";
+    public string DepartmentName { get; set; } = "";
+    public bool IsCompliant { get; set; }
+    public int TotalHours { get; set; }
+    public int MissingHours { get; set; }
+    public int ExpiredCerts { get; set; }
+    public int ExpiringCerts { get; set; }
+    public string StatusLevel { get; set; } = "green";  // green | amber | orange | red
+    public List<CertBriefDto> Certificates { get; set; } = new();
+}
+
+public class CertBriefDto
+{
+    public int TrainingId { get; set; }
+    public string CourseName { get; set; } = "";
+    public string IssueDate { get; set; } = "";
+    public string ExpiryDate { get; set; } = "";
+    public bool IsLifetime { get; set; }
+    public bool NeedsRenewal { get; set; }
+    public int? RenewalAfterYears { get; set; }
+    public string StatusLabel { get; set; } = "";
+    public string BadgeClass { get; set; } = "";
+    public int DaysLeft { get; set; }
+}
+
 public class AlertDto
 {
     public string EmployeeCode { get; set; } = "";
     public string EmployeeName { get; set; } = "";
+    public int EmployeeId { get; set; }
     public string Department { get; set; } = "";
     public string CourseName { get; set; } = "";
-    public string? ExpiryDate { get; set; }
+    public string? IssueDate { get; set; }             // Ngày cấp
+    public string? ExpiryDate { get; set; }            // Ngày hết hạn
     public int? DaysLeft { get; set; }
-    public string AlertType { get; set; } = "";       // expired | orange | amber | missing
+    public string AlertType { get; set; } = "";        // expired | orange | amber | missing
     public string StatusLabel { get; set; } = "";
     public string BadgeClass { get; set; } = "";
-    public string AlertKind { get; set; } = "";       // cert | missing
+    public string AlertKind { get; set; } = "";        // cert | missing
+    public bool IsLifetime { get; set; }               // Chứng chỉ vĩnh viễn
+    public bool NeedsRenewal { get; set; }             // Có cần học lại không
+    public int? RenewalAfterYears { get; set; }        // Số năm phải học lại
 }
 
 // ─── Employee ────────────────────────────────────────────────
@@ -96,8 +146,8 @@ public class TrainingRecordDto
     public int TrainingHours { get; set; }
     /// <summary>Số tiết thực tế đã học (nhập tay)</summary>
     public int ActualHours { get; set; }
-    public string IssueDate { get; set; } = "";
-    public string ExpiryDate { get; set; } = "";
+    public string IssueDate { get; set; } = "";        // Ngày cấp
+    public string ExpiryDate { get; set; } = "";       // Ngày hết hạn
     public string? Notes { get; set; }
     /// <summary>Tên file minh chứng (nếu có)</summary>
     public string? CertificateFile { get; set; }
@@ -108,6 +158,12 @@ public class TrainingRecordDto
     public string StatusLabel { get; set; } = "";
     public string BadgeClass { get; set; } = "";
     public int DaysLeft { get; set; }
+    // Phân loại chứng chỉ
+    public bool IsLifetime { get; set; }               // Vĩnh viễn
+    public bool NeedsRenewal { get; set; }             // Có cần học lại
+    public int? RenewalAfterYears { get; set; }        // Số năm học lại
+    public string CertTypeLabel { get; set; } = "";    // "Vĩnh viễn" | "Có thời hạn"
+    public string CertTypeBadge { get; set; } = "";    // badge class
 }
 
 public class CreateTrainingDto
@@ -167,6 +223,19 @@ public class TrainingCourseDto
     public string CourseName { get; set; } = "";
     public string Organizer { get; set; } = "";
     public int DefaultHours { get; set; }
+    public bool IsLifetime { get; set; }
+    public int? RequiresRenewalAfterYears { get; set; }
+}
+
+public class CreateCourseDto
+{
+    public string CourseCode { get; set; } = "CUSTOM";
+    public string CourseName { get; set; } = "";
+    public string Organizer { get; set; } = "";
+    public int DefaultHours { get; set; }
+    public string? Description { get; set; }
+    public bool IsLifetime { get; set; } = false;
+    public int? RequiresRenewalAfterYears { get; set; }
 }
 
 // ─── Authentication DTOs ─────────────────────────────────────

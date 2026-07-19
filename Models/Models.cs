@@ -40,6 +40,18 @@ public class TrainingCourse
     public int DefaultHours { get; set; }
     public string? Description { get; set; }
 
+    /// <summary>
+    /// Chứng chỉ vĩnh viễn (true) = không cần cảnh báo, không cần đào tạo lại.
+    /// Ví dụ: An toàn bức xạ, Chứng chỉ hành nghề
+    /// </summary>
+    public bool IsLifetime { get; set; } = false;
+
+    /// <summary>
+    /// Số năm phải học lại (null hoặc 0 = vĩnh viễn).
+    /// Ví dụ: Phẫu thuật nội soi = 2, Cố xương khớp = 2
+    /// </summary>
+    public int? RequiresRenewalAfterYears { get; set; }
+
     public ICollection<EmployeeTraining> EmployeeTrainings { get; set; } = new List<EmployeeTraining>();
 }
 

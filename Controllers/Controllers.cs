@@ -68,6 +68,15 @@ public class DashboardController : ControllerBase
             alerts = alerts.Where(a => a.AlertType == type || a.AlertKind == type).ToList();
         return Ok(alerts);
     }
+
+    /// <summary>GET /api/v1/dashboard/by-department — Thống kê theo phòng ban</summary>
+    [HttpGet("by-department")]
+    public async Task<ActionResult<List<DepartmentStatsDto>>> GetByDepartment()
+    {
+        if (User.IsInRole("User")) return Forbid();
+        var stats = await _cme.BuildDepartmentStatsAsync();
+        return Ok(stats);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -528,6 +537,53 @@ public class CoursesController : ControllerBase
             CourseName   = c.CourseName,
             Organizer    = c.Organizer,
             DefaultHours = c.DefaultHours,
+            IsLifetime   = c.IsLifetime,
+            RequiresRenewalAfterYears = c.RequiresRenewalAfterYears,
         }));
+    }
+
+    /// <summary>POST /api/v1/courses — Tạo khóa học mới</summary>
+    [HttpPost]
+    [Authorize(Roles = "Admin,HR")]
+    public async Task<ActionResult<TrainingCourseDto>> Create([FromBody] CreateCourseDto dto)
+    {
+        var course = new Models.TrainingCourse
+        {
+            CourseCode   = dto.CourseCode,
+            CourseName   = dto.CourseName,
+            Organizer    = dto.Organizer,
+            DefaultHours = dto.DefaultHours,
+            Description  = dto.Description,
+            IsLifetime   = dto.IsLifetime,
+            RequiresRenewalAfterYears = dto.IsLifetime ? null : dto.RequiresRenewalAfterYears,
+        };
+        _db.TrainingCourses.Add(course);
+        await _db.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetAll), new { id = course.CourseId }, new TrainingCourseDto
+        {
+            CourseId     = course.CourseId,
+            CourseCode   = course.CourseCode,
+            CourseName   = course.CourseName,
+            Organizer    = course.Organizer,
+            DefaultHours = course.DefaultHours,
+            IsLifetime   = course.IsLifetime,
+            RequiresRenewalAfterYears = course.RequiresRenewalAfterYears,
+        });
+    }
+
+    /// <summary>PUT /api/v1/courses/{id} — Cập nhật khóa học (loại, số năm học lại)</summary>
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,HR")]
+    public async Task<IActionResult> Update(int id, [FromBody] CreateCourseDto dto)
+    {
+        var course = await _db.TrainingCourses.FindAsync(id);
+        if (course == null) return NotFound();
+        course.CourseName   = dto.CourseName;
+        course.Organizer    = dto.Organizer;
+        course.DefaultHours = dto.DefaultHours;
+        course.IsLifetime   = dto.IsLifetime;
+        course.RequiresRenewalAfterYears = dto.IsLifetime ? null : dto.RequiresRenewalAfterYears;
+        await _db.SaveChangesAsync();
+        return NoContent();
     }
 }
