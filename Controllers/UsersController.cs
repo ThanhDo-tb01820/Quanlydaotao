@@ -256,4 +256,58 @@ public class UsersController : ControllerBase
             return StatusCode(StatusCodes.Status409Conflict, new { message = "Hệ thống đang bận xử lý yêu cầu đồng thời. Vui lòng thử lại sau giây lát." });
         }
     }
+
+    /// <summary>POST /api/v1/users/auto-generate — Tạo tài khoản hàng loạt cho NV chưa có</summary>
+    [HttpPost("auto-generate")]
+    public async Task<IActionResult> AutoGenerateAccounts()
+    {
+        var currentUsername = User.Identity?.Name ?? "Admin";
+
+        var unlinkedEmployees = await _db.Employees
+            .Where(e => e.IsActive && !_db.Users.Any(u => u.EmployeeId == e.EmployeeId))
+            .ToListAsync();
+
+        if (unlinkedEmployees.Count == 0)
+        {
+            return Ok(new { message = "Tất cả nhân viên đang hoạt động đã có tài khoản!" });
+        }
+
+        var hasher = new PasswordHasher<User>();
+        int count = 0;
+
+        foreach (var emp in unlinkedEmployees)
+        {
+            if (await _db.Users.AnyAsync(u => u.Username == emp.EmployeeCode))
+                continue;
+
+            var newUser = new User
+            {
+                Username = emp.EmployeeCode,
+                FullName = emp.FullName,
+                Role = "User",
+                EmployeeId = emp.EmployeeId,
+                IsActive = true,
+                RequirePasswordChange = true,
+                CreatedAt = DateTime.Now
+            };
+
+            newUser.PasswordHash = hasher.HashPassword(newUser, "123456@Aa");
+            _db.Users.Add(newUser);
+            count++;
+        }
+
+        if (count > 0)
+        {
+            _db.AuditLogs.Add(new AuditLog
+            {
+                Username = currentUsername,
+                Action = "Auto Generate Users",
+                Description = $"Admin auto-generated {count} user accounts.",
+                CreatedAt = DateTime.Now
+            });
+            await _db.SaveChangesAsync();
+        }
+
+        return Ok(new { message = $"Đã tạo thành công {count} tài khoản mới cho nhân viên!" });
+    }
 }

@@ -1311,49 +1311,45 @@ function initAuth() {
 }
 
 function applyRolePermissions(role) {
-  // Reset các class ẩn trước
-  document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only, .USER-only').forEach(el => el.classList.remove('role-hidden'));
+  // Reset: Ẩn tất cả các thành phần phân quyền
+  document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only, .USER-only').forEach(el => el.classList.add('role-hidden'));
   
-  if (role === 'User') {
-    // Nhân viên chỉ được xem hồ sơ của mình
-    document.getElementById('nav-dashboard')?.classList.add('role-hidden');
-    document.getElementById('nav-alerts')?.classList.add('role-hidden');
-    document.getElementById('nav-employees')?.classList.add('role-hidden');
-    document.getElementById('nav-trainings')?.classList.add('role-hidden');
-    document.getElementById('nav-settings')?.classList.add('role-hidden');
-    document.getElementById('nav-users')?.classList.add('role-hidden');
-    document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only').forEach(el => el.classList.add('role-hidden'));
+  if (role === 'Admin') {
+    document.querySelectorAll('.ADMIN-only').forEach(el => el.classList.remove('role-hidden'));
+  } 
+  else if (role === 'HR') {
+    document.querySelectorAll('.HR-only').forEach(el => el.classList.remove('role-hidden'));
     
-    // Hide mobile buttons
-    document.getElementById('mnav-dashboard')?.classList.add('role-hidden');
-    document.getElementById('mnav-alerts')?.classList.add('role-hidden');
-    document.getElementById('mnav-employees')?.classList.add('role-hidden');
-    document.getElementById('mnav-trainings')?.classList.add('role-hidden');
+    // HR không được quyền xem cài đặt
+    document.getElementById('nav-settings')?.classList.add('role-hidden');
     document.getElementById('mnav-settings')?.classList.add('role-hidden');
+  } 
+  else if (role === 'Manager') {
+    document.querySelectorAll('.MANAGER-only').forEach(el => el.classList.remove('role-hidden'));
+    
+    // Manager không được quyền xem cài đặt
+    document.getElementById('nav-settings')?.classList.add('role-hidden');
+    document.getElementById('mnav-settings')?.classList.add('role-hidden');
+  } 
+  else if (role === 'Viewer') {
+    // Viewer chỉ xem được Dashboard
+    document.getElementById('nav-dashboard')?.classList.remove('role-hidden');
+    document.getElementById('mnav-dashboard')?.classList.remove('role-hidden');
+    document.querySelectorAll('.nav-section-label').forEach(el => {
+      if(el.textContent.includes('Tổng quan')) el.classList.remove('role-hidden');
+    });
+  } 
+  else if (role === 'User') {
+    document.querySelectorAll('.USER-only').forEach(el => el.classList.remove('role-hidden'));
   }
-  else {
-    // Các vai trò quản trị ẩn menu Hồ sơ cá nhân
+
+  // Quản lý hiển thị Hồ sơ cá nhân
+  if (role !== 'User') {
     document.getElementById('nav-my-profile')?.classList.add('role-hidden');
     document.getElementById('mnav-my-profile')?.classList.add('role-hidden');
-    
-    if (role === 'Viewer') {
-      document.getElementById('nav-employees')?.classList.add('role-hidden');
-      document.getElementById('nav-trainings')?.classList.add('role-hidden');
-      document.getElementById('nav-settings')?.classList.add('role-hidden');
-      document.getElementById('nav-users')?.classList.add('role-hidden');
-      document.getElementById('nav-alerts')?.classList.add('role-hidden');
-      document.querySelectorAll('.HR-only, .ADMIN-only, .MANAGER-only').forEach(el => el.classList.add('role-hidden'));
-    }
-    else if (role === 'Manager') {
-      document.getElementById('nav-settings')?.classList.add('role-hidden');
-      document.getElementById('nav-users')?.classList.add('role-hidden');
-      document.querySelectorAll('.HR-only, .ADMIN-only').forEach(el => el.classList.add('role-hidden'));
-    }
-    else if (role === 'HR') {
-      document.getElementById('nav-settings')?.classList.add('role-hidden');
-      document.getElementById('nav-users')?.classList.add('role-hidden');
-      document.querySelectorAll('.ADMIN-only').forEach(el => el.classList.add('role-hidden'));
-    }
+  } else {
+    document.getElementById('nav-my-profile')?.classList.remove('role-hidden');
+    document.getElementById('mnav-my-profile')?.classList.remove('role-hidden');
   }
 }
 
@@ -1387,7 +1383,14 @@ async function handleLogin() {
     }
     
     const data = await res.json();
-    currentUser = { userId: data.userId, username: data.username, fullName: data.fullName, role: data.role, employeeId: data.employeeId };
+    currentUser = { 
+      userId: data.userId, 
+      username: data.username, 
+      fullName: data.fullName, 
+      role: data.role, 
+      employeeId: data.employeeId,
+      requirePasswordChange: data.requirePasswordChange 
+    };
     currentToken = data.token;
     
     const storage = rememberMe ? localStorage : sessionStorage;
@@ -1406,11 +1409,20 @@ async function handleLogin() {
     passwordInput.value = '';
     
     if (currentUser.role === 'User') {
-      viewMyProfile();
+      showPage('my-dashboard');
+      loadMyDashboard();
     } else {
       runInitApis();
     }
+    
     showToast('👋 Đăng nhập thành công!');
+    
+    if (currentUser.requirePasswordChange) {
+      setTimeout(() => {
+        openChangePasswordModal(null, true);
+        showToast('Vui lòng đổi mật khẩu mới ở lần đăng nhập đầu tiên!', 'warning');
+      }, 500);
+    }
   } catch (err) {
     errorDiv.textContent = err.message;
   }
@@ -1428,20 +1440,39 @@ function handleLogout(event) {
   sessionStorage.removeItem('token');
   
   document.getElementById('loginPage').style.display = 'flex';
-  showPage('dashboard');
   showToast('🚪 Đăng xuất thành công!', 'warning');
 }
 
-function openChangePasswordModal(event) {
+function openChangePasswordModal(event, force = false) {
   if (event) event.stopPropagation();
   document.getElementById('pwOld').value = '';
   document.getElementById('pwNew').value = '';
   document.getElementById('pwConfirm').value = '';
   document.getElementById('changePasswordError').textContent = '';
-  document.getElementById('changePasswordOverlay').classList.add('open');
+  
+  const cancelBtn = document.querySelector('#changePasswordOverlay .btn-secondary');
+  if (cancelBtn) {
+    cancelBtn.style.display = force ? 'none' : 'block';
+  }
+  
+  // Prevent closing by clicking outside if forced
+  const overlay = document.getElementById('changePasswordOverlay');
+  if (force) {
+    overlay.onclick = null; 
+  } else {
+    overlay.onclick = (e) => {
+      if (e.target === overlay) closeChangePasswordModal();
+    };
+  }
+  
+  overlay.classList.add('open');
 }
 
 function closeChangePasswordModal() {
+  if (currentUser && currentUser.requirePasswordChange) {
+    showToast('Bạn bắt buộc phải đổi mật khẩu!', 'warning');
+    return;
+  }
   document.getElementById('changePasswordOverlay').classList.remove('open');
 }
 
@@ -1841,37 +1872,61 @@ async function renderUsers() {
   
   try {
     allUsersList = await api('/users');
-    displayUsersTable(allUsersList);
+    filterUsers();
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><p>Không thể tải danh sách tài khoản.</p></td></tr>`;
   }
 }
 
+let currentUsersPage = 1;
+const usersPerPage = 10;
+let filteredUsersList = [];
+
 function filterUsers() {
   const search = document.getElementById('userSearch')?.value.toLowerCase() || '';
   const role = document.getElementById('userRoleFilter')?.value || '';
   
-  let list = allUsersList;
+  filteredUsersList = allUsersList;
   if (search) {
-    list = list.filter(u => u.username.toLowerCase().includes(search) || u.fullName.toLowerCase().includes(search));
+    filteredUsersList = filteredUsersList.filter(u => u.username.toLowerCase().includes(search) || u.fullName.toLowerCase().includes(search));
   }
   if (role) {
-    list = list.filter(u => u.role === role);
+    filteredUsersList = filteredUsersList.filter(u => u.role === role);
   }
   
-  displayUsersTable(list);
+  currentUsersPage = 1; // Reset to page 1 on filter
+  displayUsersTable();
 }
 
-function displayUsersTable(list) {
+window.goToUsersPage = function(page) {
+  currentUsersPage = page;
+  displayUsersTable();
+};
+
+function displayUsersTable() {
   const tbody = document.getElementById('usersTableBody');
   if (!tbody) return;
   
-  if (!list || list.length === 0) {
+  if (!filteredUsersList || filteredUsersList.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><p>Không tìm thấy tài khoản phù hợp</p></td></tr>`;
+    document.getElementById('usersPagination').style.display = 'none';
     return;
   }
   
-  tbody.innerHTML = list.map(u => `
+  document.getElementById('usersPagination').style.display = 'flex';
+  
+  const totalPages = Math.ceil(filteredUsersList.length / usersPerPage);
+  if (currentUsersPage < 1) currentUsersPage = 1;
+  if (currentUsersPage > totalPages) currentUsersPage = totalPages;
+  
+  const startIndex = (currentUsersPage - 1) * usersPerPage;
+  const endIndex = Math.min(startIndex + usersPerPage, filteredUsersList.length);
+  const pageData = filteredUsersList.slice(startIndex, endIndex);
+  
+  document.getElementById('usersPageInfo').textContent = `Đang hiển thị ${startIndex + 1} - ${endIndex} / ${filteredUsersList.length} bản ghi`;
+  document.getElementById('usersPageButtons').innerHTML = generatePaginationButtons(currentUsersPage, totalPages, 'goToUsersPage');
+  
+  tbody.innerHTML = pageData.map(u => `
     <tr>
       <td><strong style="color:var(--brand);">${u.username}</strong></td>
       <td>${u.fullName}</td>
@@ -1920,7 +1975,9 @@ async function openCreateUserModal() {
   let empOptions = '<option value="">— Không liên kết —</option>';
   try {
     const emps = await api('/employees');
-    empOptions += emps.map(e => `<option value="${e.employeeId}">${e.fullName} (${e.employeeCode})</option>`).join('');
+    const linkedEmpIds = usersData.filter(u => u.employeeId).map(u => u.employeeId);
+    const unlinkedEmps = emps.filter(e => !linkedEmpIds.includes(e.employeeId));
+    empOptions += unlinkedEmps.map(e => `<option value="${e.employeeId}">${e.fullName} (${e.employeeCode})</option>`).join('');
   } catch(_) {}
   
   body.innerHTML = `
@@ -2175,6 +2232,132 @@ async function deleteUser(userId) {
   } catch(err) {
     // API helper handles error toast
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  USER SPECIFIC FUNCTIONS
+// ─────────────────────────────────────────────────────────────
+async function autoGenerateAccounts() {
+  if (!confirm('Hệ thống sẽ tự động tạo tài khoản (mật khẩu mặc định: 123456@Aa) cho TẤT CẢ nhân viên chưa có tài khoản. Bạn có chắc chắn?')) return;
+  
+  try {
+    const res = await api('/users/auto-generate', { method: 'POST' });
+    showToast(res.message || 'Tạo tài khoản loạt thành công!', 'success');
+    if (document.getElementById('page-users').classList.contains('active')) {
+      await renderUsers();
+    }
+  } catch (err) {
+    showToast('Lỗi: ' + err.message, 'error');
+  }
+}
+
+let myCertsData = [];
+
+async function loadMyDashboard() {
+  if (!currentUser || !currentUser.employeeId) return;
+  
+  try {
+    const employee = await api(`/employees/${currentUser.employeeId}`);
+    if (!employee) return;
+    
+    myCertsData = employee.trainings || [];
+    
+    // Calculate total hours
+    const totalHours = myCertsData.reduce((sum, t) => sum + (t.trainingHours || 0), 0);
+    const requiredHours = 48; // For now, hardcode 48 for 2 years
+    
+    document.getElementById('myTotalHours').textContent = `${totalHours} / ${requiredHours}`;
+    document.getElementById('myCompletedTrainings').textContent = myCertsData.length;
+    
+    // Expiring certs
+    let expiringCertsCount = 0;
+    const now = new Date();
+    const warns = [];
+    
+    myCertsData.forEach(t => {
+      if (t.expiryDate) {
+        const expDate = new Date(t.expiryDate);
+        const diffTime = expDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 60 && diffDays > 0) {
+          expiringCertsCount++;
+          warns.push(`⚠️ Chứng chỉ <b>${t.courseName}</b> sắp hết hạn sau ${diffDays} ngày.`);
+        } else if (diffDays <= 0) {
+          expiringCertsCount++;
+          warns.push(`🚨 Chứng chỉ <b>${t.courseName}</b> đã hết hạn!`);
+        }
+      }
+    });
+    
+    document.getElementById('myExpiringCerts').textContent = expiringCertsCount;
+    
+    const alertsContainer = document.getElementById('myAlertsContainer');
+    if (warns.length > 0) {
+      alertsContainer.innerHTML = warns.map(w => `<div style="padding: 12px; background: var(--warning-light); border-left: 4px solid var(--warning); border-radius: 4px;">${w}</div>`).join('');
+    } else {
+      alertsContainer.innerHTML = '<div class="empty-state" style="padding: 20px;">Không có cảnh báo nào</div>';
+    }
+    
+    // Render My Profile Info
+    document.getElementById('myProfileInfo').innerHTML = `
+      <p style="margin-bottom: 8px;"><strong>Họ và tên:</strong> ${employee.fullName}</p>
+      <p style="margin-bottom: 8px;"><strong>Mã NV:</strong> ${employee.employeeCode}</p>
+      <p style="margin-bottom: 8px;"><strong>Khoa/Phòng:</strong> ${employee.departmentName || '---'}</p>
+      <p style="margin-bottom: 8px;"><strong>Chức danh:</strong> ${employee.position || '---'}</p>
+    `;
+    
+    renderMyCertsTable(myCertsData);
+    
+  } catch (err) {
+    showToast('Lỗi khi tải thông tin cá nhân', 'error');
+  }
+}
+
+function renderMyCertsTable(data) {
+  const tbody = document.getElementById('myCertTableBody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Chưa có chứng chỉ nào</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = data.map(t => {
+    let statusBadge = '<span class="status-badge status-good">Còn hạn</span>';
+    if (t.isLifetime) {
+      statusBadge = '<span class="status-badge status-good">Vĩnh viễn</span>';
+    } else if (t.expiryDate) {
+      const expDate = new Date(t.expiryDate);
+      const now = new Date();
+      const diffTime = expDate - now;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays <= 0) statusBadge = '<span class="status-badge status-danger">Hết hạn</span>';
+      else if (diffDays <= 60) statusBadge = `<span class="status-badge status-warning">Sắp hết hạn (${diffDays} ngày)</span>`;
+    }
+    
+    const fileLink = t.certificateUrl 
+      ? `<a href="${t.certificateUrl}" target="_blank" style="color:var(--primary)">📄 Tải về</a>`
+      : '---';
+      
+    return `
+      <tr>
+        <td style="font-weight: 500;">${t.courseName}</td>
+        <td>${t.certificateType || '---'}</td>
+        <td style="text-align:center">${t.trainingHours || 0}</td>
+        <td>${t.issueDate ? new Date(t.issueDate).toLocaleDateString('vi-VN') : '---'}</td>
+        <td>${t.expiryDate ? new Date(t.expiryDate).toLocaleDateString('vi-VN') : '---'}</td>
+        <td>${statusBadge}</td>
+        <td style="text-align:center">${fileLink}</td>
+      </tr>
+    `;
+  }).join('');
+  applyMobileDataLabels('myCertTableBody');
+}
+
+function filterMyCerts() {
+  const term = document.getElementById('myCertSearch').value.toLowerCase();
+  const filtered = myCertsData.filter(t => t.courseName.toLowerCase().includes(term));
+  renderMyCertsTable(filtered);
 }
 
 // ─────────────────────────────────────────────────────────────

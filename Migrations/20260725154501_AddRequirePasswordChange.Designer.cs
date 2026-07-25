@@ -4,6 +4,7 @@ using CmeTracker.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CmeTracker.Api.Migrations
 {
     [DbContext(typeof(CmeTrackerDbContext))]
-    partial class CmeTrackerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260725154501_AddRequirePasswordChange")]
+    partial class AddRequirePasswordChange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

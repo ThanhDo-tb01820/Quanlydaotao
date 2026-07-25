@@ -34,14 +34,15 @@
     </div>
 
     <nav class="sidebar-nav">
-      <div class="nav-section-label">Tổng quan</div>
-      <a href="#" class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+      <!-- Dành cho Quản lý -->
+      <div class="nav-section-label ADMIN-only HR-only MANAGER-only">Tổng quan</div>
+      <a href="#" class="nav-item active ADMIN-only HR-only MANAGER-only" id="nav-dashboard" onclick="showPage('dashboard')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
         </svg>
         <span>Dashboard</span>
       </a>
-      <a href="#" class="nav-item" id="nav-alerts" onclick="showPage('alerts')">
+      <a href="#" class="nav-item ADMIN-only HR-only MANAGER-only" id="nav-alerts" onclick="showPage('alerts')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
@@ -49,14 +50,14 @@
         <span class="nav-badge" id="alertBadge">0</span>
       </a>
 
-      <div class="nav-section-label">Quản lý</div>
-      <a href="#" class="nav-item" id="nav-employees" onclick="showPage('employees')">
+      <div class="nav-section-label ADMIN-only HR-only MANAGER-only">Quản lý</div>
+      <a href="#" class="nav-item ADMIN-only HR-only MANAGER-only" id="nav-employees" onclick="showPage('employees')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
         <span>Nhân viên</span>
       </a>
-      <a href="#" class="nav-item" id="nav-trainings" onclick="showPage('trainings')">
+      <a href="#" class="nav-item ADMIN-only HR-only MANAGER-only" id="nav-trainings" onclick="showPage('trainings')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
@@ -69,17 +70,26 @@
         </svg>
         <span>Phân quyền</span>
       </a>
-      <a href="#" class="nav-item USER-only" id="nav-my-profile" onclick="viewMyProfile()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-        <span>Hồ sơ cá nhân</span>
-      </a>
-      <a href="#" class="nav-item" id="nav-settings" onclick="showPage('settings')">
+      <a href="#" class="nav-item ADMIN-only HR-only MANAGER-only" id="nav-settings" onclick="showPage('settings')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
         <span>Cài đặt</span>
+      </a>
+
+      <!-- Dành cho Nhân viên (User) -->
+      <div class="nav-section-label USER-only">Cá nhân</div>
+      <a href="#" class="nav-item USER-only" id="nav-my-dashboard" onclick="showPage('my-dashboard')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span>Tổng quan</span>
+      </a>
+      <a href="#" class="nav-item USER-only" id="nav-my-profile" onclick="showPage('my-profile')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>Hồ sơ chứng chỉ</span>
       </a>
     </nav>
 
@@ -417,6 +427,94 @@
       </div>
     </section>
 
+    <!-- =================== PAGE: MY DASHBOARD (USER) =================== -->
+    <section class="page" id="page-my-dashboard">
+      <div class="page-header">
+        <h1 class="page-title">Tổng quan của tôi</h1>
+        <p class="page-subtitle" id="myDashboardSubtitle">Theo dõi tiến độ học tập và chứng chỉ của bạn</p>
+      </div>
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--primary-light);color:var(--primary)">⏱️</div>
+          <div class="stat-content">
+            <p class="stat-title">Số tiết đã đạt</p>
+            <h2 class="stat-value" id="myTotalHours">0 / 48</h2>
+            <p class="stat-desc" id="myHoursDesc">Cần 48 tiết trong 2 năm</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--warning-light);color:var(--warning)">⚠️</div>
+          <div class="stat-content">
+            <p class="stat-title">Sắp/Đã hết hạn</p>
+            <h2 class="stat-value" id="myExpiringCerts">0</h2>
+            <p class="stat-desc">Chứng chỉ cần lưu ý</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--success-light);color:var(--success)">✅</div>
+          <div class="stat-content">
+            <p class="stat-title">Đã hoàn thành</p>
+            <h2 class="stat-value" id="myCompletedTrainings">0</h2>
+            <p class="stat-desc">Khóa học/chứng chỉ</p>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top:24px;">
+        <h2 style="font-size: 16px; margin-bottom: 12px; color: var(--text-dark);">Thông báo & Cảnh báo của bạn</h2>
+        <div id="myAlertsContainer" style="display:flex; flex-direction:column; gap:12px;">
+          <div class="empty-state" style="padding: 20px;">Không có thông báo nào</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== PAGE: MY PROFILE (USER) =================== -->
+    <section class="page" id="page-my-profile">
+      <div class="page-header">
+        <h1 class="page-title">Hồ sơ cá nhân & Chứng chỉ</h1>
+      </div>
+      
+      <div class="detail-grid" style="grid-template-columns: 1fr;">
+        <div class="detail-card">
+          <h2 class="detail-section-title">Thông tin cá nhân</h2>
+          <div id="myProfileInfo">
+            <!-- Rendered by JS -->
+            <div class="empty-state" style="padding: 20px;">Đang tải...</div>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h2 class="detail-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+            Chứng chỉ của tôi
+            <div class="search-box" style="width: 250px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input type="text" id="myCertSearch" placeholder="Tìm tên chứng chỉ..." oninput="filterMyCerts()" />
+            </div>
+          </h2>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tên chứng chỉ</th>
+                  <th>Phân loại</th>
+                  <th>Số tiết</th>
+                  <th>Ngày cấp</th>
+                  <th>Hết hạn</th>
+                  <th>Trạng thái</th>
+                  <th style="width:80px;text-align:center">File</th>
+                </tr>
+              </thead>
+              <tbody id="myCertTableBody">
+                <tr><td colspan="7" class="empty-state">Đang tải...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- =================== PAGE: SETTINGS =================== -->
     <section class="page" id="page-settings">
       <div class="page-header">
@@ -489,12 +587,20 @@
           <h1 class="page-title">Quản lý Phân quyền & Tài khoản</h1>
           <p class="page-subtitle">Quản trị danh sách tài khoản người dùng đăng nhập và cấu hình phân quyền hệ thống</p>
         </div>
-        <button class="btn-primary" onclick="openCreateUserModal()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Thêm tài khoản
-        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="autoGenerateAccounts()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/>
+            </svg>
+            Tạo tài khoản loạt
+          </button>
+          <button class="btn-primary" onclick="openCreateUserModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Thêm tài khoản
+          </button>
+        </div>
       </div>
       
       <div class="table-controls">
@@ -533,6 +639,11 @@
           </thead>
           <tbody id="usersTableBody" data-labels="Tên đăng nhập,Họ và Tên,Vai trò,Nhân viên liên kết,Phòng ban,Trạng thái,Thao Tác"></tbody>
         </table>
+      </div>
+      <!-- Pagination for Users -->
+      <div class="pagination-controls" id="usersPagination" style="display: none;">
+        <span class="page-info" id="usersPageInfo">Đang hiển thị 0 bản ghi</span>
+        <div class="page-buttons" id="usersPageButtons"></div>
       </div>
     </section>
   </main>
@@ -626,38 +737,47 @@
   <!-- Mobile Bottom Navigation -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav">
     <div class="mobile-bottom-nav-inner">
-      <button class="mobile-nav-btn active" id="mnav-dashboard" onclick="showPage('dashboard')">
+      <!-- Dành cho Quản lý -->
+      <button class="mobile-nav-btn active ADMIN-only HR-only MANAGER-only" id="mnav-dashboard" onclick="showPage('dashboard')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
         </svg>
-        <span>Dashboard</span>
+        <span>Tổng quan</span>
       </button>
-      <button class="mobile-nav-btn" id="mnav-alerts" onclick="showPage('alerts')">
+      <button class="mobile-nav-btn ADMIN-only HR-only MANAGER-only" id="mnav-alerts" onclick="showPage('alerts')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
         <span class="mobile-nav-badge" id="mnavAlertBadge" style="display:none"></span>
         <span>Cảnh báo</span>
       </button>
-      <button class="mobile-nav-btn" id="mnav-employees" onclick="showPage('employees')">
+      <button class="mobile-nav-btn ADMIN-only HR-only MANAGER-only" id="mnav-employees" onclick="showPage('employees')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
         <span>Nhân viên</span>
       </button>
-      <button class="mobile-nav-btn" id="mnav-trainings" onclick="showPage('trainings')">
+      <button class="mobile-nav-btn ADMIN-only HR-only MANAGER-only" id="mnav-trainings" onclick="showPage('trainings')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
         <span>Đào tạo</span>
       </button>
-      <button class="mobile-nav-btn" id="mnav-settings" onclick="showPage('settings')">
+      <button class="mobile-nav-btn ADMIN-only HR-only MANAGER-only" id="mnav-settings" onclick="showPage('settings')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
         <span>Cài đặt</span>
       </button>
-      <button class="mobile-nav-btn USER-only" id="mnav-my-profile" onclick="viewMyProfile()">
+
+      <!-- Dành cho Nhân viên (User) -->
+      <button class="mobile-nav-btn USER-only" id="mnav-my-dashboard" onclick="showPage('my-dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span>Tổng quan</span>
+      </button>
+      <button class="mobile-nav-btn USER-only" id="mnav-my-profile" onclick="showPage('my-profile')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
         </svg>

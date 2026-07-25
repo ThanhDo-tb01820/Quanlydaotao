@@ -78,7 +78,8 @@ public class AuthController : ControllerBase
             Username = user.Username,
             FullName = user.FullName,
             Role = user.Role,
-            EmployeeId = user.EmployeeId
+            EmployeeId = user.EmployeeId,
+            RequirePasswordChange = user.RequirePasswordChange
         });
     }
 
@@ -112,6 +113,7 @@ public class AuthController : ControllerBase
         }
 
         user.PasswordHash = hasher.HashPassword(user, dto.NewPassword);
+        user.RequirePasswordChange = false;
         
         _db.AuditLogs.Add(new AuditLog
         {

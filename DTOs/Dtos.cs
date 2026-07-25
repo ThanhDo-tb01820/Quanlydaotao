@@ -257,6 +257,7 @@ public class LoginResponseDto
     public string FullName { get; set; } = "";
     public string Role { get; set; } = "";
     public int? EmployeeId { get; set; }
+    public bool RequirePasswordChange { get; set; }
 }
 
 public class ChangePasswordDto

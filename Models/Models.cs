@@ -114,6 +114,7 @@ public class User
     public int? EmployeeId { get; set; }
     public Employee? Employee { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool RequirePasswordChange { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 }
 
